@@ -1,0 +1,205 @@
+# DDBOT-WSa 文档中心配置
+# 生成器：MkDocs Material 9.x
+# 本地预览：mkdocs serve
+# 本地构建：mkdocs build
+# 发布：由 .github/workflows/docs.yml 自动推送到 gh-pages
+
+site_name: DDBOT-WSa 文档
+site_url: https://kizunerwe.github.io/DDBOT-WSa-docs/
+site_description: DDBOT-WSa —— 基于 OneBot 协议的 消息推送框架，支持 B站/斗鱼/虎牙/ACFun/油管/微博/推特/抖音/TwitCasting 订阅推送
+site_author: kizunerwe
+
+repo_name: cnxysoft/DDBOT-WSa
+repo_url: https://github.com/cnxysoft/DDBOT-WSa
+
+docs_dir: docs
+site_dir: site
+
+# 主题
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.instant        # 单页应用式导航，切换不刷新
+    - navigation.instant.progress
+    - navigation.tracking       # URL 随标题变化
+    - navigation.tabs           # 顶部一级分类用 Tab
+    - navigation.tabs.sticky    # 滚动时 Tab 吸顶
+    - navigation.sections       # 侧边栏分组
+    - navigation.expand         # 默认展开侧边栏
+    - navigation.indexes        # 章节首页
+    - navigation.top            # 返回顶部按钮
+    - navigation.footer         # 上下页
+    - search.suggest            # 搜索建议
+    - search.highlight          # 搜索结果高亮
+    - search.share              # 搜索结果分享
+    - content.code.copy         # 代码块复制按钮
+    - content.code.annotate     # 代码注解
+    - content.tabs.link         # 内容标签页联动
+    - content.tooltips          # 工具提示
+    - toc.follow                # 目录跟随
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换至暗色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: 切换至亮色模式
+  font:
+    text: Noto Sans SC
+    code: JetBrains Mono
+  favicon: assets/favicon.svg
+  icon:
+    logo: material/robot
+  # 自定义样式
+  custom_dir: docs/overrides
+
+# Markdown 扩展
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      toc_depth: 3
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# 插件
+plugins:
+  - search:
+      lang:
+        - ja      # 日语分词器对中文效果较好
+        - en
+  - tags
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: date
+      fallback_to_build_date: true
+      enable_git_follow: false
+  - minify:
+      minify_html: true
+
+# 额外 CSS/JS
+extra_css:
+  - assets/stylesheets/extra.css
+
+# 页脚社交链接与版权
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/cnxysoft/DDBOT-WSa
+      name: 源码仓库（cnxysoft/DDBOT-WSa）
+    - icon: fontawesome/brands/github
+      link: https://github.com/kizunerwe
+      name: 文档维护者（kizunerwe）
+    - icon: fontawesome/brands/bilibili
+      link: https://www.bilibili.com/read/cv10602230
+      name: B 站专栏介绍
+  status:
+    new: 新增
+    deprecated: 已弃用
+    experimental: 实验性
+
+copyright: 第三方维护版文档 · 由 kizunerwe 基于 cnxysoft/DDBOT-WSa 整理编写
+
+# 导航树
+nav:
+  - 首页: index.md
+  - 快速开始:
+      - quickstart/index.md
+  - 部署与连接:
+      - 了解 DDBOT: deploy/intro.md
+      - 版本与分支: deploy/branches.md
+      - 安装: deploy/install.md
+      - 首次配置: deploy/first-config.md
+      - 连接 OneBot:
+          - deploy/connect/index.md
+          - LLOneBot / LLBot: deploy/connect/llonebot.md
+          - NapCat: deploy/connect/napcat.md
+          - Lagrange: deploy/connect/lagrange.md
+          - 云崽 ws-plugin: deploy/connect/yunzai.md
+      - 媒体与 FFmpeg: deploy/connect/media.md
+      - 从纯血 DDBOT 迁移: deploy/connect/migrate.md
+      - 升级与维护: deploy/upgrade.md
+  - 配置参考:
+      - 配置总览: config/index.md
+      - bot 与连接: config/bot.md
+      - B 站: config/bilibili.md
+      - 推特: config/twitter.md
+      - 抖音: config/douyin.md
+      - 其它订阅源: config/other-sources.md
+      - 代理与图片池: config/proxy-imagepool.md
+      - 推送与模板开关: config/push-template.md
+  - 命令手册:
+      - 命令速查: commands/index.md
+      - 命令格式: commands/format.md
+      - 订阅命令: commands/subscribe.md
+      - 配置命令: commands/config-cmd.md
+      - 权限命令: commands/permission.md
+      - 娱乐命令: commands/fun.md
+      - 管理员命令: commands/admin.md
+  - 订阅源:
+      - sources/index.md
+      - B 站: sources/bilibili.md
+      - 斗鱼: sources/douyu.md
+      - 虎牙: sources/huya.md
+      - ACFun: sources/acfun.md
+      - YouTube: sources/youtube.md
+      - 微博: sources/weibo.md
+      - TwitCasting: sources/twitcasting.md
+      - 推特: sources/twitter.md
+      - 抖音: sources/douyin.md
+  - 模板系统:
+      - 模板入门: template/index.md
+      - 语法与变量: template/syntax.md
+      - 模板函数: template/funcs.md
+      - 命令模板: template/command-tmpl.md
+      - 推送模板: template/notify-tmpl.md
+      - 事件模板: template/trigger-tmpl.md
+      - 自定义命令: template/custom-command.md
+      - 定时消息: template/cronjob.md
+  - 插件开发:
+      - 快速开始: plugin/index.md
+      - Concern 接口: plugin/concern-interface.md
+      - StateManager: plugin/statemanager.md
+      - 持久化: plugin/persistence.md
+      - 配置钩子: plugin/config-hook.md
+      - keyset 与注册: plugin/keyset-register.md
+      - 完整范本: plugin/example-walkthrough.md
+  - 常见问题: faq.md
+  - 更新日志: changelog.md

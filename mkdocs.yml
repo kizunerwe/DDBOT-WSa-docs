@@ -126,7 +126,7 @@ extra:
       name: 源码仓库（cnxysoft/DDBOT-WSa）
     - icon: fontawesome/brands/github
       link: https://github.com/kizunerwe
-      name: 文档维护者（kizunerwe）
+      name: 维护者（kizunerwe）
     - icon: fontawesome/brands/bilibili
       link: https://www.bilibili.com/read/cv10602230
       name: B 站专栏介绍
@@ -135,7 +135,7 @@ extra:
     deprecated: 已弃用
     experimental: 实验性
 
-copyright: 第三方维护版文档 · 由 kizunerwe 基于 cnxysoft/DDBOT-WSa 整理编写
+copyright: 由 kizunerwe 维护 · 基于 cnxysoft/DDBOT-WSa
 
 # 导航树
 nav:

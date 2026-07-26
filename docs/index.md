@@ -63,7 +63,7 @@ DDBOT 由 [Sora233](https://github.com/Sora233/DDBOT) 开发，最初基于 Mira
 
 ## 关于本文档
 
-本站是 DDBOT-WSa 的**第三方维护版文档**，由 [kizunerwe](https://github.com/kizunerwe) 基于官方资料与源码整理编写，旨在提供一份清晰、全面、跟得上版本演进的文档。
+本站是 DDBOT-WSa 的**文档中心**，由 [kizunerwe](https://github.com/kizunerwe) 基于官方资料与源码整理编写，旨在提供一份清晰、全面、跟得上版本演进的文档。
 
 **参考与致谢**
 

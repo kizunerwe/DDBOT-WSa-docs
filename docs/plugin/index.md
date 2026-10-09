@@ -25,7 +25,7 @@ DDBOT 提供了脚手架和示例，建议从它们开始：
 - **[DDBOT-example](https://github.com/Sora233/DDBOT-example)** - 示例插件，展示完整写法（原版，Sora233 维护）
 
 !!! note "关于脚手架仓库"
-    原文档提到的 `cnxysoft/DDBOT-WSa-template` 与 `cnxysoft/DDBOT-WSa-example` 仓库目前不存在，请使用上面 Sora233 维护的原版脚手架。两者 API 兼容，可直接用于 DDBOT-WSa。
+    原文档提到的 `cnxysoft/DDBOT-WSa-template` 与 `cnxysoft/DDBOT-WSa-example` 仓库目前不存在，请使用上面 Sora233 维护的原版脚手架；注意把 import 路径改成当前仓库的模块名 `github.com/cnxysoft/DDBOT-WSa`。
 
 ### 使用脚手架
 

@@ -58,7 +58,7 @@ node app
 |--------|----|
 | 连接类型 | 正向 WebSocket（WebSocket Client） |
 | 地址 | `ws://127.0.0.1:15630/ws` |
-| Token | 与 DDBOT 的 `websocket.token` 一致 |
+| Token | 通常留空；`master` / `next` 的 ws-server 不校验 token，`[next-dev]` 配置了 `websocket.token` 时需填一致的值 |
 
 !!! tip "DDBOT 侧配置"
     DDBOT 保持默认正向模式：
@@ -66,8 +66,12 @@ node app
     ```yaml
     websocket:
       mode: ws-server
-      ws-server: 0.0.0.0:15630
+      ws-server: 0.0.0.0:15630   # master / next 默认监听全部网卡
     ```
+
+    `master` / `next` 默认监听全部网卡，ws-plugin（云崽）用 `ws://127.0.0.1:15630/ws` 即可连入；这两个分支的 ws-server **不校验 `token`**，ws-plugin 侧留空即可。
+
+    `[next-dev]` 默认收紧为 `127.0.0.1:15630`：未配置 `token` 时只允许监听回环地址；若 ws-plugin（云崽）在**其它机器或容器**里、需把 `ws-server` 改成它可达的地址，则**必须配置 `token`**，否则拒绝启动。
 
 配置保存后 ws-plugin 会自动重连。
 
@@ -75,7 +79,7 @@ node app
 
 ## 验证连接
 
-1. DDBOT 日志出现 `有新的ws连接了!!`
+1. DDBOT 日志出现 `有新的ws连接了!!`（`[next-dev]` 为 `WebSocket client connected (ws-server mode)`）
 2. 私聊 BOT 发 `/ping`，收到 `pong` 即正常
 
 ---
@@ -83,7 +87,7 @@ node app
 ## 注意事项
 
 - **不要关闭云崽和 DDBOT 本体**，两者需同时运行
-- ws-plugin 已适配 DDBOT 的 at 操作和错误提示
+- ws-plugin 已适配 DDBOT 的 at 操作和错误提示（见 0.4.0 更新日志）
 - 如需更新 icqq，按云崽文档操作，注意更新后可能需要重新登录
 
 ---

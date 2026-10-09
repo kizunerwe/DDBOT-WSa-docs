@@ -6,7 +6,7 @@ DDBOT 的模板系统让你能自定义所有推送、命令、事件的输出�
 
 ## 启用模板
 
-模板默认关闭，需在 `application.yaml` 启用：
+模板由 `template.enable` 控制：未配置该项时代码兜底为 `false`（关闭）；但首次运行自动生成的 `application.yaml` 默认写入 `enable: true`，即默认配置下模板是启用的。手动配置：
 
 ```yaml
 template:
@@ -131,7 +131,7 @@ DDBOT 模板基于 Go 标准库 `text/template`，所有 `{{ ... }}` 都有特�
 
 DDBOT 内置了所有模板的默认版本（编译进二进制）。在 `template/` 目录创建**同名**文件即可覆盖默认模板。
 
-内置默认模板列表（位于源码 `lsp/template/default/`）：
+内置默认模板列表（位于源码 `lsp/template/default/`）。下面是各分支的**并集**：未标注的在 `master` 已有；`[next]` 表示 `master` 没有、从 `next` 起加入（`next` / `next-dev` 都有）；`[next-dev]` 表示仅 `next-dev` 有（`next` 也没有）。
 
 - `command.group.checkin.tmpl`
 - `command.group.help.tmpl`
@@ -141,17 +141,40 @@ DDBOT 内置了所有模板的默认版本（编译进二进制）。在 `templa
 - `command.private.ping.tmpl`
 - `command.private.unknown_cmd_tips.tmpl`
 - `notify.group.acfun.live.tmpl`
+- `notify.group.acfun.news.tmpl`（`[next]`）
 - `notify.group.bilibili.live.tmpl`
 - `notify.group.bilibili.news.tmpl`
 - `notify.group.douyin.live.tmpl`
+- `notify.group.douyin.news.tmpl`（`[next]`）
 - `notify.group.douyu.live.tmpl`
 - `notify.group.huya.live.tmpl`
+- `notify.group.twitch.live.tmpl`（`[next-dev]`）
+- `notify.group.twitter.news.tmpl`（`[next]`）
+- `notify.group.weibo.news.tmpl`（`[next]`）
+- `notify.group.xhh.news.tmpl`（`[next-dev]`）
+- `notify.group.xhs.live.tmpl`（`[next-dev]`）
+- `notify.group.xhs.news.tmpl`（`[next-dev]`）
+- `notify.group.youtube.live.tmpl`（`[next]`）
+- `notify.group.youtube.news.tmpl`（`[next]`）
 - `trigger.group.member_in.tmpl`
 - `trigger.group.member_out.tmpl`
 - `trigger.group.poke.tmpl`
 - `trigger.private.group_invited.tmpl`
 - `trigger.private.new_friend_added.tmpl`
 - `trigger.private.poke.tmpl`
+
+---
+
+## 在 Web 面板编辑模板（next-dev）
+
+`next-dev` 的 [Web 管理面板](../deploy/webui.md) 提供可视化模板编辑，免去手动改文件：
+
+- 列出内置默认模板与已自定义的模板（按推送 / 命令 / 事件分类）
+- 在线编辑内容，保存前做**语法校验**（`lsp/template/loader.go` 的 `ValidateTemplate`）
+- 用示例数据在 IM 风格消息气泡里**实时预览**渲染效果（图片渲染成占位图框，CQ 码折叠为可读标记）
+- **恢复默认**：删除 `template/` 下对应的自定义文件，回退到内置模板
+
+保存会写入 `template/` 目录，与手动编辑一样靠热重载立即生效，无需重启；使用前仍需在配置里启用 `template.enable: true`。
 
 ---
 

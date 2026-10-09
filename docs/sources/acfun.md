@@ -1,9 +1,9 @@
 # ACFun
 
-ACFun 直播订阅，master 分支无需额外配置。
+ACFun 直播与动态订阅。
 
-!!! tip "next / next-dev 分支增强"
-    `next` 及以后分支新增了 **ACFUN 动态（news）推送**，并支持配置 ACFUN 账号实现关注/动态订阅。详见 [版本与分支](../deploy/branches.md#next-分支的新增内容)。
+!!! tip "分支差异"
+    `master` 只支持直播（`live`）；`[next]` 起支持 **ACFUN 动态（news）推送**，并可配置 ACFUN 账号实现关注/动态订阅。详见 [版本与分支](../deploy/branches.md)。
 
 ---
 
@@ -14,31 +14,32 @@ ACFun 直播订阅，master 分支无需额外配置。
 ```
 
 ```bash
-# 订阅
+# 订阅直播
 /watch -s acfun <主播ID>
 
 # 取消订阅
 /unwatch -s acfun <主播ID>
 ```
 
-master 分支只支持 `live` 类型。
+`master` 只支持 `live`；`[next]` 起支持 `live` 与 `news`，不指定 `-t` 时默认 `live`。
 
-### next 分支：订阅动态
+### 订阅动态（`[next]`）
 
 ```
 /watch -s acfun -t news <主播ID>
 ```
 
-订阅动态需要配置 ACFUN 账号：
+`[next]` 起订阅动态需要配置 ACFUN 账号或 cookie（仅订阅直播无需配置）：
 
 ```yaml
 acfun:
-  account:        # ACFUN 账号
-  password:       # ACFUN 密码
-  authKey:        # 可选
-  acPassToken:    # 可选
-  unsub: false
-  interval: 25s
+  interval: 25s      # 轮询间隔，master 即读取；未配置默认 20s
+  # 以下配置 [next] 起才被读取：
+  account:           # ACFUN 账号
+  password:          # ACFUN 密码
+  authKey:           # 可选 cookie
+  acPassToken:       # 可选 cookie
+  unsub: false       # 取消订阅时是否取关
   onlyOnlineNotify: false
 ```
 
@@ -69,13 +70,15 @@ ACFUN-{{ .name }}直播结束了
 {{- end -}}
 ```
 
+`[next]` 动态推送模板名为 `notify.group.acfun.news.tmpl`（`master` 无该模板）。
+
 ---
 
 ## 配置
 
-master 分支无需额外配置。推送行为可用 `/config` 定制。
+`master` 订阅直播无需额外配置，可通过 `acfun.interval` 调整轮询间隔。推送行为可用 `/config` 定制。
 
-next 分支订阅动态需配置 ACFUN 账号，见上文。
+`[next]` 订阅动态需配置 ACFUN 账号（见上文）。
 
 详见 [配置命令](../commands/config-cmd.md) 与 [版本与分支](../deploy/branches.md)。
 

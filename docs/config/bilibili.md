@@ -10,6 +10,8 @@ B 站是 DDBOT 最常用的订阅源，配置项也最多。本页讲 `bilibili`
 bilibili:
   SESSDATA:                  # B 站 cookie
   bili_jct:                  # B 站 cookie
+  account:                   # B 站账号（未配置 cookie 时用于登录换 cookie）
+  password:                  # B 站密码
   qrlogin: true              # 扫码登录
   interval: 25s              # 检测间隔
   imageMergeMode: "auto"     # 图片合并模式
@@ -19,6 +21,7 @@ bilibili:
   disableSub: false          # 禁止自动关注
   onlyOnlineNotify: false    # 仅推送在线期间的更新
   autoParsePosts: false      # 自动解析专栏
+  secAnalysis: false         # [next] 动态二次解析
 ```
 
 ---
@@ -35,7 +38,7 @@ bilibili:
   # SESSDATA 和 bili_jct 留空
 ```
 
-启动后日志会显示二维码，用 B 站 App 扫码登录。cookie 失效时清空 `SESSDATA` 和 `bili_jct` 重启即可再次扫码。
+启动后日志会显示二维码，用 B 站 App 扫码登录。扫码成功后会把 cookie 写回配置；cookie 失效时清空 `SESSDATA` 和 `bili_jct` 重启即可再次扫码。
 
 !!! note "扫码登录的局限"
     - 不填账号密码，仅扫码
@@ -71,8 +74,7 @@ bilibili:
   password: "你的B站密码"
 ```
 
-!!! warning "目前不可用"
-    B 站账号密码自动登录目前处于失效状态，建议使用扫码或 cookie 方式。
+未提供 cookie 时，BOT 会用账号密码登录并自动获取 cookie（`freshAccountCookieInfo` -> `Login`）。账号密码与 cookie 同时配置时，优先使用 cookie。
 
 ---
 
@@ -85,7 +87,9 @@ bilibili:
   interval: 25s
 ```
 
-直播状态和动态的检测间隔。**过快可能导致 IP 被暂时封禁**，建议保持默认 25s。
+直播状态和动态的检测间隔。**过快可能导致 IP 被暂时封禁**。
+
+代码未配置该项时默认 `20s`（`lsp/bilibili/concern_fresher.go`）；自动生成的 `application.yaml` 里写的是 `25s`。
 
 ### `imageMergeMode` - 图片合并
 
@@ -134,9 +138,11 @@ bilibili:
 
 | 值 | 行为 |
 |----|------|
-| `0`（默认） | 不限制 |
+| `0`（默认） | 要求粉丝数 > 0，0 粉会被拒绝 |
 | `-1` | 无限制 |
-| 正整数 | 订阅时若粉丝数不足则拒绝 |
+| 正整数 `N` | 粉丝数 <= `N` 时拒绝订阅 |
+
+判断在 `lsp/bilibili/concern.go`：`if !watchSelf && userStat.Follower <= int64(minFollowerCap) { 拒绝 }`。因此 `0` 并非「不限制」，而是「必须至少有 1 个粉丝」；`-1` 才真正关闭限制。该检查仅在 BOT 已配置 B 站账号/cookie（未走 EmitQueue 慢速模式）且目标尚未被关注时生效；未配置账号时整个关注/门槛逻辑都不执行。
 
 主要用于过滤无意义的测试订阅（防止用直播间 ID 误订阅）。
 
@@ -178,6 +184,15 @@ bilibili:
 | `false`（默认） | 专栏动态按普通动态推送 |
 | `true` | 自动解析专栏内容，发送专栏正文而非动态卡片 |
 
+### `secAnalysis` - 动态二次解析（`[next]`）
+
+```yaml
+bilibili:
+  secAnalysis: false
+```
+
+`[next]` 起支持。默认 `false`，开启后对动态做二次解析（`lsp/bilibili/model.go`）。
+
 ---
 
 ## BOT 使用 B 站账号的说明
@@ -196,8 +211,8 @@ bilibili:
 
 | 场景 | 建议订阅数 |
 |------|-----------|
-| 不配置账号 | ≤ 5 个（否则延迟大幅上升） |
-| 配置账号 | 最多 2000（已验证） |
+| 不配置账号 | <= 5 个（否则延迟大幅上升） |
+| 配置账号 | 代码日志建议上限 2000 |
 
 大规模订阅务必配置账号，且 `interval` 不要调得太小。
 

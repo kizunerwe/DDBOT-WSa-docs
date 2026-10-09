@@ -36,14 +36,14 @@ DDBOT 对 `.lsp.db` 加了文件锁防重复启动：
 - 确认 DDBOT 已启动，日志显示 `WebSocket server started`
 - 确认端口 15630 没被占用
 - 确认 `websocket.mode` 两边对应：DDBOT 用 `ws-server` 时，实现端必须用「反向 WS」连过来
-- 确认 token 一致
+- 确认 token 一致（仅 `[next-dev]` 的正向模式会校验并可能返回 401；`master` / `next` 的正向模式不校验，反向模式由实现端校验）
 
 详见 [连接 OneBot](deploy/connect/index.md)。
 
 ### Q：连上了但收不到消息？
 
 - 确认 BOT 已被拉进群或已是好友
-- 确认 `reloadDelay` 延迟加载已完成（看日志）
+- 确认好友 / 群 / 群员列表已加载完成（`reloadDelay`，看日志「延迟加载时间」与「已加载 N 个好友」）
 - 确认 BOT 未被禁言
 
 ### Q：macOS 提示「无法验证开发者」
@@ -51,7 +51,7 @@ DDBOT 对 `.lsp.db` 加了文件锁防重复启动：
 系统设置 -> 隐私与安全性 -> 仍要打开。或终端运行：
 
 ```bash
-xattr -d com.apple.quarantine ./DDBOT
+xattr -d com.apple.quarantine ./DDBOT-WSa
 ```
 
 ---
@@ -59,8 +59,6 @@ xattr -d com.apple.quarantine ./DDBOT
 ## B 站相关
 
 ### Q：为什么设置了 @全体成员却没效果？
-
-**官方 bot**：@全体次数在所有群共享，用尽即失效，用 @特定用户替代。
 
 **私人部署**：
 
@@ -85,7 +83,6 @@ bilibili:
 
 !!! warning "cookie 注意"
     - 不要点 B 站「退出登录」，否则 cookie 失效
-    - 用浏览器「清除历史记录」或隐私窗口登录获取
     - cookie 可能较长，确认复制完整
 
 详见 [B 站配置](config/bilibili.md)。
@@ -109,7 +106,6 @@ bilibili:
 
 新 BOT 大概率是 QQ 账号被风控：
 
-- 用 BOT 挂机 3-7 天（期间**不要使用 BOT 功能**，否则可能封号）解除风控
 - DDBOT-WSa 不再依赖 `device.json` 登录，此文件已退化为占位，删除它通常无效。重点检查 OneBot 实现端是否正常连接、账号是否被风控
 
 ### Q：为什么后台有反应但 QQ 收不到？
@@ -124,7 +120,7 @@ DDBOT-WSa 把 IM 登录交给 OneBot 实现端，**连接稳定性由实现端�
 
 - DDBOT 进程崩溃：用进程管理器（systemd / nssm / Docker `restart`）拉起，见 [升级与维护](deploy/upgrade.md#进程保活)
 - IM 连接掉线：检查 OneBot 实现端的日志与重连配置，各实现端有自己的重连策略
-- 纯血 DDBOT 时代的 `session.token`、`bot.onDisconnected` 等协议层重连机制在 WSa 中已弱化，一般无需关心
+- `bot.onDisconnected` 配置项仍然生效：设为 `exit` 时，DDBOT 检测到掉线会直接退出，可交给进程管理器拉起
 
 ---
 
@@ -134,10 +130,10 @@ DDBOT-WSa 把 IM 登录交给 OneBot 实现端，**连接稳定性由实现端�
 
 **操作前备份 `.lsp.db`**，然后：
 
-1. 用文本编辑器打开 `.lsp.db`
-2. 删掉最后一行
-3. 保存后重试启动
-4. 重复数十次仍不行则到交流群求助
+1. 有可用备份时，用备份覆盖 `.lsp.db` 后重启
+2. 没有备份且数据不重要时，删除 `.lsp.db` 恢复出厂，重新订阅
+
+程序没有提供修复数据库的命令，手工编辑容易把文件改坏。
 
 ### Q：如何恢复出厂设置？
 
@@ -155,7 +151,7 @@ DDBOT-WSa 把 IM 登录交给 OneBot 实现端，**连接稳定性由实现端�
 
 - 镜像不可用：换一个或多配几个 `baseUrl`
 - UA 被拒：填入真实浏览器 `userAgent`
-- CF 防护：配 `cfclearance`
+- CF 防护：代码只在抓取时识别 Cloudflare 拦截并报错（`cf_clearance has expired!`），**无法通过配置绕过**
 
 详见 [推特配置](config/twitter.md)。
 
@@ -166,7 +162,7 @@ DDBOT-WSa 把 IM 登录交给 OneBot 实现端，**连接稳定性由实现端�
 ### Q：抖音订阅没启动？
 
 - 检查 `acSignature` 和 `acNonce` 是否都填了
-- 看日志是否有 `Stop` 提示
+- 看日志是否出现「抖音Cookie未设置，将关闭抖音推送功能」
 - 一直触发人机验证：调大 `interval`，确认 UA 与 cookie 一致
 
 详见 [抖音配置](config/douyin.md)。
@@ -199,7 +195,7 @@ DDBOT-WSa 把 IM 登录交给 OneBot 实现端，**连接稳定性由实现端�
 ### Q：从纯血 DDBOT 迁移要注意什么？
 
 - 备份 `.lsp.db`
-- 用文本编辑器把 `.lsp.db` 里的 `ae` 替换为 `ex`
+- 替换程序后启动 WSa，数据库版本迁移会自动执行（迁移前自动备份到 `.lsp.db-<时间戳>`）
 - 配置 `websocket` 段
 - @全体成员可能失效，建议重新配置
 

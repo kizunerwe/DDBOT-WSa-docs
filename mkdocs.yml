@@ -1,5 +1,5 @@
 # DDBOT-WSa 文档中心配置
-# 生成器：MkDocs Material 9.x
+# 生成器：MkDocs Material（版本未固定，见 .github/workflows/docs.yml）
 # 本地预览：mkdocs serve
 # 本地构建：mkdocs build
 # 发布：由 .github/workflows/docs.yml 自动推送到 gh-pages
@@ -147,6 +147,7 @@ nav:
       - 版本与分支: deploy/branches.md
       - 安装: deploy/install.md
       - 首次配置: deploy/first-config.md
+      - Web 管理面板: deploy/webui.md
       - 连接 OneBot:
           - deploy/connect/index.md
           - LLOneBot / LLBot: deploy/connect/llonebot.md
@@ -184,6 +185,9 @@ nav:
       - TwitCasting: sources/twitcasting.md
       - 推特: sources/twitter.md
       - 抖音: sources/douyin.md
+      - 小红书: sources/xhs.md
+      - Twitch: sources/twitch.md
+      - 小黑盒: sources/xhh.md
   - 模板系统:
       - 模板入门: template/index.md
       - 语法与变量: template/syntax.md

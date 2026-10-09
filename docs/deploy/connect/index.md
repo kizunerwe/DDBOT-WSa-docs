@@ -18,13 +18,18 @@ DDBOT 在本地开一个 HTTP/WS 服务器，等实现端主动连过来。
 ```yaml
 websocket:
   mode: ws-server
-  ws-server: 0.0.0.0:15630   # 监听地址:端口
+  ws-server: 0.0.0.0:15630   # master / next 默认：监听全部网卡
   token:                      # 可选，Access Token 校验
 ```
 
-- 监听路径固定为 `/ws`，即完整地址 `ws://<ip>:15630/ws`
+- 监听路径固定为 `/ws`，即完整地址 `ws://<ip>:15630/ws`（`[next-dev]` 的适配器不校验路径，根路径也可连）
 - 实现端那边配置「反向 WS」地址指向这里
 - **新手推荐**：配置最简单
+
+!!! warning "监听地址与 token"
+    `master` / `next` 默认监听 `0.0.0.0:15630`（全部网卡），实现端用 `ws://127.0.0.1:15630/ws` 或本机 IP 均可连入；这两个分支的 ws-server **不校验 `token`**，配置了也不生效（详见 [Access Token 校验](#access-token-校验)）。
+
+    `[next-dev]` 收紧为默认 `127.0.0.1:15630`：未配置 `token` 时只允许监听回环地址；若把 `ws-server` 改为 `0.0.0.0`、具体网卡或公网 IP，**必须配置 `websocket.token`**，否则拒绝启动。
 
 ### 反向 WebSocket（`ws-reverse`）
 
@@ -49,7 +54,9 @@ websocket:
 
 ## Access Token 校验
 
-如果担心别人连到你的 BOT，可设置 `token`：
+`master` / `next` 的 ws-server **不校验 `token`**：即使 DDBOT 侧配置了 `token`，正向连接也不会鉴权，实现端带不带、带得对不对都不影响连接。只有 `ws-reverse`（反向）模式下，DDBOT 才会在连接实现端时带上 `Authorization: Bearer <token>`，由实现端校验。
+
+`[next-dev]` 的 ws-server 会校验 `token`：默认仅监听回环地址，未配置 `token` 时若把 `ws-server` 改为非回环地址（供其它机器/容器连接），会**拒绝启动**；配置 `token` 后，正向连接必须带 `Authorization: Bearer <token>`，不匹配返回 401 并断开：
 
 ```yaml
 websocket:
@@ -57,10 +64,10 @@ websocket:
   token: "your-secret-token"
 ```
 
-- 正向模式：实现端连接时需在 HTTP Header 带 `Authorization: Bearer your-secret-token`
-- 反向模式：DDBOT 连接实现端时会自动带上这个 Header
+- 正向模式：`master` / `next` 不校验，实现端无需填写；`[next-dev]` 需在 HTTP Header 带 `Authorization: Bearer your-secret-token`，否则返回 401
+- 反向模式：DDBOT 连接实现端时会自动带上这个 Header，由实现端校验
 
-**token 必须两边一致**，否则连接会被拒绝。
+因此 `[next-dev]` 的正向模式与反向模式都要求两边 token 一致；`master` / `next` 的正向模式不存在「不一致被拒」。
 
 ---
 
@@ -72,9 +79,11 @@ DDBOT 日志出现：
 有新的ws连接了!!
 ```
 
-实现端那边也会显示已连接（具体文案因实现端而异）。
+`[next-dev]` 对应的日志为 `WebSocket client connected (ws-server mode)`。
 
-连接建立后，DDBOT 会延迟加载好友/群/群员信息（默认 3 秒，可配置 `reloadDelay`），加载完成后即可正常收发消息。
+连接建立后，DDBOT 会按 `reloadDelay` 先延迟一段时间，再加载好友 / 群 / 群员列表（生成的配置里 `enable: true`、`time: 3s`），日志会打印「延迟加载时间」以及「已加载 N 个好友 / 群组 / 群成员」。`[next-dev]` 已移除该配置。
+
+实现端那边也会显示已连接（具体文案因实现端而异）。
 
 ---
 
@@ -106,10 +115,10 @@ DDBOT-WSa 从 v0.4.0 起**改用 OneBot array 消息格式**发送（早期版�
 这意味着：
 
 - 文本、图片、@、回复、戳一戳、视频、语音、文件等都能正常发送
-- 媒体文件支持三种投递方式：**URL / Base64 / 本地路径**（由实现端处理，超时 120s）
+- 媒体文件支持三种投递方式：**URL / Base64 / 本地路径**（由实现端处理）
 - 大部分媒体由实现端直接处理，无需 DDBOT 侧额外配置
 
-视频/语音/文件发送和 m3u8 视频推送需要 FFmpeg，见 [媒体与 FFmpeg](media.md)。
+视频/语音/文件发送由实现端处理，一般无需 DDBOT 侧额外配置；仅推特订阅的 m3u8 视频推送需要 FFmpeg，见 [媒体与 FFmpeg](media.md)。
 
 ---
 
@@ -125,12 +134,11 @@ DDBOT-WSa 从 v0.4.0 起**改用 OneBot array 消息格式**发送（早期版�
 ### 连上但收不到消息
 
 - 确认 BOT 已被拉进群，或已是好友
-- 确认 `reloadDelay` 延迟加载已完成（看日志）
 - 确认未被禁言（被禁言时 BOT 不会响应群命令）
 
 ### token 不匹配
 
-日志报 `401` 或连接被立即断开：检查两边 `token` 是否完全一致，注意多余空格。
+`master` / `next` 的 ws-server 不校验 token，正向模式不会因此连不上；`[next-dev]` 的正向模式 token 不匹配时，实现端会收到 `401 Unauthorized` 并断开（DDBOT 侧不一定有日志），反向模式则由实现端校验 DDBOT 带上的 token。检查两边 `token` 是否完全一致，注意多余空格。
 
 更多排障见 [常见问题](../../faq.md)。
 

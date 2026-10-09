@@ -43,7 +43,7 @@ DDBOT 的命令格式被设计成贴近 shell 命令，方便理解和使用。
 | `--help` | `-h` | 查看帮助 |
 | `--delete` | `-d` | 撤销/删除 |
 
-大多数长选项都能用 `-` 加首字母简写。例如：
+短选项由各命令单独声明，常见的有 `-s` / `-t` / `-g` / `-h` / `-d` / `-r` / `-a`，**并非所有长选项都有短写**（例如 `/enable --global`、`/清除订阅 --abnormal` 就没有短选项）。例如：
 
 ```
 /watch -s bilibili -t live 1472906636
@@ -58,7 +58,9 @@ DDBOT 的命令格式被设计成贴近 shell 命令，方便理解和使用。
 | 选项 | 默认值 | 适用命令 |
 |------|--------|---------|
 | `-s` / `--site` | `bilibili` | watch/unwatch |
-| `-t` / `--type` | `live` | watch/unwatch |
+| `-t` / `--type` | 该订阅源类型中按字母序最靠前的一个 | watch/unwatch |
+
+`-t` 不填时并不是恒为 `live`：代码取该订阅源类型集合按字母序排序后的第一个。master 中 B 站、YouTube、斗鱼、虎牙、ACFun、抖音、TwitCasting 默认 `live`；微博、推特默认 `news`（推特的类型名是 `Tweets`，字符串值为 `news`——命令里要写 `-t news`，写 `Tweets` 不匹配）。`[next-dev]` 另提供小红书 `xhs`（默认 `live`）、小黑盒 `xhh`（默认 `news`）、Twitch `twitch`（默认 `live`）。
 
 所以下面的命令等价：
 
@@ -95,23 +97,29 @@ DDBOT 的命令格式被设计成贴近 shell 命令，方便理解和使用。
 /watch -h
 ```
 
-输出示例：
+帮助文本由 kong 从命令定义生成，结构为 `Usage:` / 说明行 / `Arguments:` / `Flags:`；下面按 `watch` 的代码定义写出各段内容（网站列表由程序在运行时动态拼接，具体排版以实际输出为准）：
 
 ```
 Usage: watch <id>
+
+当前支持的网站：<以 / 连接的当前已注册订阅源>
 
 Arguments:
   <id>
 
 Flags:
-  -h, --help               Show context-sensitive help.
-  -s, --site="bilibili"    bilibili / douyu / youtube / huya
-  -t, --type="live"        news / live
+  -h, --help             Show context-sensitive help.
+  -s, --site="bilibili"  网站参数
+  -t, --type=""          类型参数
 ```
 
 - `Flags` 列出所有选项
 - `--site="bilibili"` 表示默认值是 bilibili
+- `--type=""` 表示 `-t` 本身没有固定默认值，不填时按订阅源的第一个类型解析
 - `Arguments: <id>` 表示需要一个主命令参数
+
+!!! note "网站列表是动态生成的"
+    `-h` 里的网站列表由程序根据当前已注册的订阅源拼接而成，顺序取决于各订阅源包 `init` 的注册顺序，实际以运行时输出为准。`master` / `next` 共 9 个：bilibili、douyu、huya、acfun、youtube、weibo、twitcasting、twitter、douyin；`[next-dev]` 另加 xhs、xhh、twitch，共 12 个。
 
 ---
 

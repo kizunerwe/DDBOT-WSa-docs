@@ -21,9 +21,9 @@ sudo systemctl stop ddbot
 cp .lsp.db .lsp.db.bak.$(date +%Y%m%d)
 cp application.yaml application.yaml.bak
 
-# 替换程序（下载新版后）
-mv DDBOT-new ./DDBOT
-chmod +x ./DDBOT
+# 替换程序（下载新版后，文件名以实际产物为准，见安装页）
+mv /path/to/new/DDBOT-WSa ./DDBOT-WSa
+chmod +x ./DDBOT-WSa
 
 # 启动
 sudo systemctl start ddbot
@@ -80,24 +80,16 @@ tryLock数据库失败：您可能重复启动了这个BOT！
 
 ### 数据库损坏修复
 
-启动报错或闪退，可能是数据库损坏。尝试：
+启动报错或闪退，可能是数据库损坏。先**备份** `.lsp.db`，然后：
 
-1. **备份** `.lsp.db`
-2. 用文本编辑器打开 `.lsp.db`，**删掉最后一行**，保存后重试启动
-3. 重复上面步骤数十次，仍不行则到交流群求助
+- 有可用备份时，用备份覆盖 `.lsp.db` 后重启
+- 没有备份且数据不重要时，删除 `.lsp.db` 恢复出厂，重新订阅
 
-详见 [FAQ](../faq.md)。
+数据库是 buntdb 的单一数据文件，程序没有提供修复命令；手工编辑容易把文件改坏。详见 [FAQ](../faq.md)。
 
 ### 重置出厂
 
 删除 `.lsp.db` 即恢复出厂设置（**所有订阅和权限丢失**）。仅在数据库严重损坏且无法修复时使用。
-
-### 运维工具
-
-[buntdb-cli](https://github.com/Sora233/buntdb-cli) 可作为运维工具查看/修改数据库。
-
-!!! danger "不要在 DDBOT 运行时使用 buntdb-cli"
-    buntdb 不支持多写，DDBOT 运行时用 cli 操作会导致数据库损坏。务必先停止 DDBOT。
 
 ---
 
@@ -110,17 +102,17 @@ DDBOT-WSa 进程退出后不会自动重启，建议配合进程管理器实现�
 - **Docker**：`restart: unless-stopped`
 
 !!! info "关于「掉线重连」"
-    纯血 DDBOT 时代有 `bot.onDisconnected`、`session.token` 等 QQ 协议层的重连机制。DDBOT-WSa 把登录交给了 OneBot 实现端，**IM 连接的稳定性由实现端负责**，DDBOT 自身不再处理协议层重连。
+    纯血 DDBOT 时代有 `bot.onDisconnected`、`session.token` 等 QQ 协议层的重连机制。DDBOT-WSa 把 QQ 登录交给了 OneBot 实现端，**QQ 协议层的连接稳定性由实现端负责**。
 
     - 如果是 DDBOT 进程崩溃：靠上面的进程管理器拉起即可
     - 如果是 IM 连接掉线：检查 OneBot 实现端的日志与重连配置（各实现端有自己的重连策略）
-    - `bot.onDisconnected` 配置项仍保留但作用已弱化，一般无需关心
+    - `bot.onDisconnected` 配置项仍然生效：设为 `exit` 时，DDBOT 检测到掉线会直接退出，可交给进程管理器拉起
 
 ---
 
 ## 离线缓存
 
-WSa 支持离线缓存（v0.4.0+），BOT 离线期间的消息暂存，上线后补发：
+WSa 支持离线缓存：BOT 离线期间的消息暂存，上线后补发：
 
 ```yaml
 bot:

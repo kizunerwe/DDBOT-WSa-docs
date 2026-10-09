@@ -1,14 +1,17 @@
 # 命令速查
 
-DDBOT 所有命令的速查表。详细用法见左侧子页面。
+DDBOT 常用命令的速查表。详细用法见左侧子页面。
 
 !!! info "命令前缀"
     默认前缀 `/`，可通过 `bot.commandPrefix` 或 `customCommandPrefix` 修改。本页示例均用 `/`。
 
+!!! info "分支标注"
+    未标注的条目是 `master` 行为。`[next]` 表示该功能从 `next` 分支起提供；`[next-dev]` 表示仅在 `next-dev` 分支提供。
+
 !!! info "群聊 vs 私聊"
     - **群命令**：在群里发，部分需群管理员/BOT 管理员权限
     - **私聊命令**：私聊 BOT 发，需加 `-g <群号>` 指定操作的群
-    - **管理员命令**：仅私聊，仅 BOT 管理员可用
+    - **管理员命令**：多数仅私聊、仅 BOT 管理员可用；`/silence`、`/清除订阅` 群内也可用（需 BOT 管理员或 BOT 群管理员），`/刷新`、`/重新订阅` 群内也可用（`[next-dev]`）
 
 ---
 
@@ -40,7 +43,10 @@ DDBOT 所有命令的速查表。详细用法见左侧子页面。
 | `/config at <id> add\|remove\|show\|clear <QQ...>` | @特定成员 |
 | `/config title_notify <id> on` | 标题变更推送 |
 | `/config offline_notify <id> on` | 下播推送 |
+| `/config extend_notify <id> on\|off` | 增强推送开关（`[next]`） |
 | `/config filter type\|not_type\|text\|show\|clear <id> ...` | 动态过滤 |
+| `/config filter not_text <id> ...` | 关键字反向过滤（`[next]`） |
+| `/config weibo_alert ...` | 微博 Cookie/SUB 告警（`[next-dev]`） |
 
 ```bash
 /config at_all 97505 on
@@ -57,11 +63,11 @@ DDBOT 所有命令的速查表。详细用法见左侧子页面。
 |------|------|------|
 | `/grant -c <命令> <QQ>` | 授予命令权限 | 群管理员/BOT管理员 |
 | `/grant -d -c <命令> <QQ>` | 撤销命令权限 | 群管理员/BOT管理员 |
-| `/grant -r GroupAdmin <QQ>` | 授予BOT群管理员 | BOT群管理员 |
-| `/enable <命令>` | 启用命令 | BOT群管理员 |
-| `/disable <命令>` | 禁用命令 | BOT群管理员 |
-| `/silence` | 沉默模式 | BOT群管理员 |
-| `/admin` | 查看管理员 | 所有人 |
+| `/grant -r GroupAdmin <QQ>` | 授予BOT群管理员 | BOT管理员/BOT群管理员 |
+| `/enable <命令>` | 启用命令 | BOT管理员/BOT群管理员 |
+| `/disable <命令>` | 禁用命令 | BOT管理员/BOT群管理员 |
+| `/silence` | 沉默模式 | BOT管理员/BOT群管理员 |
+| `/admin` | 查看管理员 | BOT管理员（加 `-g` 时 BOT 群管理员也可） |
 
 详见 [权限命令](permission.md)。
 
@@ -77,30 +83,38 @@ DDBOT 所有命令的速查表。详细用法见左侧子页面。
 | `/倒放 [图片]` | gif 倒放 | 所有人 |
 | `/lsp` | 彩蛋 | 所有人 |
 | `/色图` | 随机图片（默认禁用） | 所有人 |
+| `/黄图` | 随机图片 R18（默认禁用） | BOT管理员或经 `/grant -c 黄图` 授权 |
 | `/help` | 帮助信息 | 所有人 |
 
 详见 [娱乐命令](fun.md)。
 
 ---
 
-## 管理员命令（仅私聊）
+## 管理员命令
+
+除 `/silence`、`/清除订阅`（master 起群内也可用，需 BOT 管理员或 BOT 群管理员）和 `/刷新`、`/重新订阅`（`[next-dev]` 群内也可用）外，其余仅私聊。
 
 | 命令 | 作用 |
 |------|------|
 | `/whosyourdaddy` | 设置管理员（仅无管理员时） |
 | `/sysinfo` | 查看 BOT 信息 |
+| `/status` | 同 `/sysinfo`（`[next]`） |
 | `/ping` | ping BOT |
-| `/log <条数> [-k 关键字]` | 查日志 |
+| `/log [条数] [-d YYYY-MM-DD] [-k 关键字]` | 查日志 |
+| `/block <QQ或群号> [天数] [-d]` | 拉黑/解封 |
 | `/quit <群号> [-f]` | 退出群/清数据 |
 | `/mode [公开\|私人\|审核]` | 设置运行模式 |
 | `/好友申请 [ID] [--reject] [--all]` | 管理好友申请 |
 | `/群邀请 [ID] [--reject] [--all]` | 管理群邀请 |
+| `/重新订阅 -g <群号>` | 微博一键重新订阅（`[next-dev]`） |
+| `/wb登陆` | 微博扫码登录（`[next-dev]`） |
+| `/刷新`（别名 `/scan`） | 群内手动刷新推特订阅（`[next-dev]`；启用/禁用用 `刷新`） |
 | `/silence [-d] [-g <群号>]` | 沉默模式 |
 | `/检测异常订阅` | 检查异常订阅 |
 | `/清除订阅 [选项]` | 清除订阅 |
 | `/disable --global <命令>` | 全局禁用命令 |
 | `/enable --global <命令>` | 全局启用命令 |
-| `/退订更新` | 关闭更新通知 |
+| `/退订更新 [-d]` | 关闭/恢复更新通知 |
 
 详见 [管理员命令](admin.md)。
 

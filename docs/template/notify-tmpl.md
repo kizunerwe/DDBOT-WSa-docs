@@ -63,7 +63,7 @@
 {{- end -}}
 ```
 
-虎牙、ACFun、抖音格式类似，把「斗鱼」换成对应平台名。
+虎牙、ACFun 与斗鱼同构（把「斗鱼」换成平台名）；抖音默认模板更简，只有 `Douyin-<昵称>正在直播` / `Douyin-<昵称>直播结束了` 加直播间链接，没有标题和封面。
 
 ---
 
@@ -86,13 +86,13 @@ B 站动态模板较复杂，通过 `.dynamic` 变量传递结构化数据，按
 | `.dynamic.WithOrigin` | 是否有原动态 |
 | `.dynamic.DynamicUrl` | 动态链接 |
 | `.msg` | 上一条相关消息（用于回复） |
-| `.parsePost` | 是否解析专栏正文 |
+| `.parse_post` | 是否解析专栏正文（对应配置 `bilibili.autoParsePosts`） |
 
 ### 动态类型
 
 | Type | 类型 | 主要字段 |
 |------|------|---------|
-| 2 | 转发动态 | `.dynamic.Image`/`.dynamic.Text` |
+| 2 | 图文动态（`WithImage`，转发时看 `.dynamic.WithOrigin`） | `.dynamic.Image`/`.dynamic.Text` |
 | 4 | 文字动态 | `.dynamic.Text.Content` |
 | 8 | 视频投稿 | `.dynamic.Video`（Title/Desc/CoverUrl/Action/Dynamic） |
 | 64 | 专栏 | `.dynamic.Post`（Title/Summary/ImageUrls） |
@@ -101,7 +101,7 @@ B 站动态模板较复杂，通过 `.dynamic` 变量传递结构化数据，按
 | 4200 / 4308 | 直播分享 | `.dynamic.Live`（Title/CoverUrl） |
 | 4300 | 收藏夹 | `.dynamic.MyList`（Title/CoverUrl） |
 | 1024 | 缺失动态 | `.dynamic.Miss.Tips` |
-| 1 | 转发 | 简化格式 |
+| 1 | 纯转发（`WithOrigin`） | 简化格式 |
 | 4302 | 课程 | `.dynamic.Course` |
 
 ### 图片字段
@@ -158,7 +158,14 @@ B 站动态模板较复杂，通过 `.dynamic` 变量传递结构化数据，按
 - 推文文字
 - 图片
 - m3u8 视频（需 ffmpeg）
-- 名称显示策略（`nameStrategy`）
+
+`[next-dev]` 另支持：
+
+- 转发推文完整原文（配置 `twitter.retweetFullText`）
+- 自动翻译（配置 `twitter.translate.*`）
+
+!!! note "名称显示策略不属于推特"
+    `nameStrategy` 是 **TwitCasting** 的配置键（`twitcasting.nameStrategy`），推特没有该配置。
 
 可通过覆盖相关逻辑自定义，详见 [推特订阅源](../sources/twitter.md)。
 

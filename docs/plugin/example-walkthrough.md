@@ -6,7 +6,7 @@
 
 ## 目录结构
 
-以推特为例（`lsp/twitter/`）：
+以推特为例（`lsp/twitter/`，下面只列主要文件；实际还有 `twitter_api.go`、`translate.go`、`rate_limiter.go`、`login_alert.go` 及各自的 `_test.go`）：
 
 ```
 lsp/twitter/
@@ -14,7 +14,7 @@ lsp/twitter/
 ├── concern.go       # 实现 Concern 接口 + StateManager
 ├── config.go        # GroupConcernConfig（自定义 Hook）
 ├── extraKey.go      # 数据库 key 封装
-├── fetchInfo.go     # 爬虫：抓取推文
+├── fetchInfo.go     # 爬虫：解析推文 HTML（ParseResp）
 ├── notify.go        # Notify 实现：转成消息
 ├── model.go         # 数据结构
 └── model_test.go    # 测试
@@ -34,7 +34,8 @@ import (
 )
 
 var (
-    BaseURL   = []string{"https://lightbrd.com/", "https://nitter.net/"}
+    // 默认镜像；可被 twitter.BaseUrl 覆盖。UserAgent 此处省略，完整值见 lsp/twitter/init.go
+    BaseURL   = []string{"https://nitter.tiekoetter.com/", "https://nitter.catsarch.com/"}
     UserAgent = "Mozilla/5.0 ..."
 )
 
@@ -131,70 +132,103 @@ func (t *StateManager) GetGroupConcernConfig(groupCode int64, id interface{}) co
 ## 4. extraKey.go - key 封装
 
 ```go
+// lsp/twitter/extraKey.go
 type ExtraKey struct{}
 
-func (e *ExtraKey) UserInfoKey(id interface{}) string {
-    return fmt.Sprintf("twitter:userinfo:%v", id)
+func (e *ExtraKey) UserInfoKey(keys ...interface{}) string {
+    return buntdb.TwitterUserInfoKey(keys...)
 }
 ```
 
-把 key 生成逻辑封装在 `ExtraKey` 里，StateManager 嵌入后可直接用 `s.UserInfoKey(id)`。
+把 key 生成逻辑封装在 `ExtraKey` 里（这里转发到 `lsp/buntdb` 的 key 函数），StateManager 嵌入后可直接用 `s.UserInfoKey(id)`。
 
 ---
 
-## 5. fetchInfo.go - 爬虫
+## 5. 爬虫与 fresh - 抓取推文（concern.go / fetchInfo.go）
 
-实现 `FreshFunc`，轮询时调用：
+抓取与解析由 `GetTweets` 完成，再由 `freshNewsInfo` 转成 `Event`（`lsp/twitter/concern.go`）：
 
 ```go
-func (c *twitterConcern) fetchTweets(screenName string) ([]concern.Event, error) {
+func (t *twitterConcern) GetTweets(id string) ([]*Tweet, error) {
     // 1. 构建 URL（从 BaseURL 随机选一个镜像）
-    url := buildProfileURL(screenName)
-    // 2. 请求页面
-    resp, err := requests.Get(url.String(), ...)
-    // 3. 解析 HTML，提取推文
-    events := parseTweets(resp)
-    return events, nil
+    Url := buildProfileURL(id)
+    // 2. 请求页面并解压（requests.GetWithHeader）
+    // 3. 解析 HTML，提取推文（lsp/twitter/fetchInfo.go 的 ParseResp）
+    return tweets, nil
+}
+
+// freshNewsInfo 把推文转成 Event
+func (t *twitterConcern) freshNewsInfo(ctype concern_type.Type, id interface{}) ([]concern.Event, error) {
+    userId := id.(string)
+    userInfo, err := t.FindOrLoadUserInfo(userId)
+    if err != nil {
+        return nil, err
+    }
+    newTweets, err := t.GetTweets(userId)
+    if err != nil {
+        return nil, err
+    }
+    var result []concern.Event
+    for _, tweet := range newTweets {
+        result = append(result, &NewsInfo{UserInfo: userInfo, Tweet: tweet})
+    }
+    return result, nil
 }
 ```
 
-启用 EmitQueue：
+推特在 `Start()` 里启用 EmitQueue，但用的是自己的 `fresh()` 轮询循环（含手动刷新通道），没有用通用的 `EmitQueueFresher`：
 
 ```go
-s.UseEmitQueue()
-s.UseFreshFunc(s.EmitQueueFresher(func(p concern_type.Type, id interface{}) ([]concern.Event, error) {
-    return c.fetchTweets(id.(string))
-}))
+t.UseEmitQueue()
+t.StateManager.UseFreshFunc(t.fresh())
+t.StateManager.UseNotifyGeneratorFunc(t.notifyGenerator())
 ```
 
 ---
 
 ## 6. notify.go - Notify 实现
 
+推特的通知类型是 `ConcernNewsNotify`，它组合接收方群号和 `NewsInfo`（事件）：
+
 ```go
-type TwitterNotify struct {
-    *TwitterEvent
-    GroupCode int64
+// lsp/twitter/notify.go
+type ConcernNewsNotify struct {
+    GroupCode int64 `json:"group_code"`
+    *NewsInfo
+    // ...
 }
 
-func (n *TwitterNotify) GetGroupCode() int64 {
+func (n *ConcernNewsNotify) GetGroupCode() int64 {
     return n.GroupCode
 }
 
-func (n *TwitterNotify) ToMessage() *mmsg.MSG {
-    m := mmsg.NewMSG()
-    m.Textf("%s 发了新推文\n", n.UserName)
-    m.Text(n.Content)
-    for _, img := range n.Images {
-        m.ImageByUrl(img)
-    }
-    if n.VideoUrl != "" {
-        // m3u8 视频，需 ffmpeg
-        m.Video(n.VideoUrl)
-    }
-    return m
+func (n *ConcernNewsNotify) ToMessage() (m *mmsg.MSG) {
+    return n.GetMSG(n)
 }
 ```
+
+`NewsInfo`（`lsp/twitter/model.go`）实现 `Event` 接口，并用模板渲染消息：
+
+```go
+type NewsInfo struct {
+    *UserInfo
+    Tweet *Tweet
+    // ...
+}
+
+func (e *NewsInfo) GetMSG(n *ConcernNewsNotify) (m *mmsg.MSG) {
+    // 组装 dynamic（TwitterDynamic）后交给模板
+    var data = map[string]interface{}{
+        "dynamic": e.dynamic,
+        "msg":     msg,
+    }
+    m, err = template.LoadAndExec("notify.group.twitter.news.tmpl", data)
+    // ...
+    return
+}
+```
+
+也就是说推特的消息内容由模板 `notify.group.twitter.news.tmpl` 决定，Go 侧只负责填好 `TwitterDynamic`。媒体在 `addMedia`（`notify.go`）里按类型追加：图片用 `mmsg.NewImageByLocal` / `mmsg.NewImageByUrl`，视频用 `mmsg.NewVideoByUrl`；`m.ImageByUrl(img, "[图片]")` 的第二参是图片加载失败时的替代文案。
 
 `ToMessage()` 把事件转成 `mmsg.MSG`，框架负责发送。
 
@@ -204,41 +238,37 @@ func (n *TwitterNotify) ToMessage() *mmsg.MSG {
 
 抖音（`lsp/douyin/`）结构类似，但有以下差异：
 
-### cookie 与人机验证
+### cookie
 
 ```go
-func init() {
-    concern.RegisterConcern(NewConcern(concern.GetNotifyChan()))
+func (c *Concern) Start() error {
+    // 以用户设置覆盖默认设置
+    setCookies()
+    if Stop {
+        logger.Warn("抖音Cookie未设置，将关闭抖音推送功能。")
+        return nil
+    }
+    // ...
+    return c.StateManager.Start()
 }
 
 func setCookies() {
     as := config.GlobalConfig.GetString("douyin.acSignature")
     an := config.GlobalConfig.GetString("douyin.acNonce")
-    if as == "" || an == "" {
-        Stop = true  // 没配 cookie 则不启动
+    if as != "" {
+        AcSignature = as
+    } else {
+        Stop = true
+    }
+    if an != "" {
+        AcNonce = an
+    } else {
+        Stop = true
     }
 }
 ```
 
-无 cookie 时设置 `Stop = true`，订阅模块不启动。
-
-### 检测人机验证
-
-```go
-func (c *douyinConcern) checkLive(id interface{}) {
-    if Stop {
-        return  // 已停止
-    }
-    // 请求接口
-    resp, err := checkUserLiveStatus(id)
-    if isHumanVerification(resp) {
-        // 触发人机验证，推送提示
-        c.notify <- &DouyinVerifyNotify{...}
-        return
-    }
-    // ...
-}
-```
+`douyin.acSignature` / `douyin.acNonce` 任一未配置就设置 `Stop = true`，`Start()` 直接返回，订阅模块不启动。
 
 ---
 
@@ -266,7 +296,7 @@ flowchart TD
 | 订阅源 | 路径 | 特点 |
 |--------|------|------|
 | 推特 | `lsp/twitter/` | nitter 镜像、m3u8 视频 |
-| 抖音 | `lsp/douyin/` | cookie 人机验证 |
+| 抖音 | `lsp/douyin/` | 需要 `douyin.acSignature` / `douyin.acNonce`，未配置则不启动 |
 | B 站 | `lsp/bilibili/` | 最完整，关注机制、动态过滤、专栏解析 |
 | 微博 | `lsp/weibo/` | 游客 cookie 自动刷新 |
 | YouTube | `lsp/youtube/` | 新老 ID 兼容 |

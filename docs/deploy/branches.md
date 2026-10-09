@@ -10,7 +10,8 @@ DDBOT-WSa 同时维护多个分支，功能与稳定性各有侧重。本页帮�
 |------|------|--------|---------|
 | **master** | 稳定分支，已验证功能 | 高 | 生产部署、新手使用 |
 | **next** | 下一版候选，新功能 + 修复 | 中 | 尝鲜新功能、跟进开发 |
-| **next-dev** | 开发分支，最前沿但不稳定 | 低 | 开发者、测试新订阅源 |
+| **next-dev** | 开发分支，最前沿但不稳定（含 [Web 管理面板](webui.md)） | 低 | 开发者、测试新订阅源 |
+| **lite-reimpl** | DDBOT-Lite 证据驱动重实现（**只读参考分支**） | 参考 | 研究 / 对照，**不推荐生产** |
 
 本文档站内容以 **master** 为准。`next` / `next-dev` 的新增内容见下文。
 
@@ -37,21 +38,22 @@ DDBOT-WSa 同时维护多个分支，功能与稳定性各有侧重。本页帮�
 - **ACFun 动态推送**：除了原有的直播推送，新增动态（news）类型，支持配置 ACFUN 账号（`account` / `password` / `authKey` / `acPassToken`）
 - **微博重构**：
     - 改用 EmitQueue 按间隔轮询（不再用旧的 `fresh()` 机制）
-    - 支持三种运行模式：`guest`（访客）/ `login`（登录）/ `api`（外部 API）
-    - 新增 SUB 过期检测与自动 Cookie 恢复
+    - 支持两种运行模式：`guest`（访客）/ `login`（登录）；`api`（外部 API）模式为 `next-dev` 新增
+    - SUB 过期检测与自动 Cookie 恢复（此能力为 `next-dev` 新增，`next` 不含）
     - 兼容微博访客 JSON 字段差异
-- **推特增强**：
-    - 支持两种模式：`mirror`（nitter 镜像，默认）/ `api`（Twitter API + cookie）
-    - 修复无媒体、空回复推送等问题
-    - 新增 `unsub` 配置
-- **抖音**：重构已推送推文过滤，新增 `sessionId` cookie
+- **推特**：
+    - 保持 `mirror`（nitter 镜像）模式
+    - 生成的配置模板里出现了 `twitter.unsub: false`，但 `next` 的代码并不读取该键，实际不生效；取关逻辑是 `next-dev` 新增的
+    - `api`（Twitter API + cookie）模式为 `next-dev` 新增，`next` 不含
+- **抖音**：重构已推送推文过滤，新增 `news` 类型与 `sessionId` cookie
 - **B 站**：直播分区数据改为被动按需更新
-- **YouTube**：新增模板支持（live / news 通知模板），Shorts 支持
+- **YouTube**：新增模板支持（live / news 通知模板）；Shorts 支持为 `next-dev` 新增，`next` 不含
 
 ### 框架改进
 
 - **StateManager**：为 EmitQueue 添加站点级别的 `interval` 配置支持（每个订阅源可独立设间隔）
-- **配置补全**：twitter、ACFun、TwitCasting 等配置字段及注释补全
+- **Telegram 推送**：支持把推送同步到 Telegram（`telegram.enable`）。`next` 提供独立的 `telegram.proxy.enable` / `telegram.proxy.url` 代理配置；`next-dev` 改为走**全局代理池**，不再读取单独的代理配置
+- **扩展数据库**：新增 `extDb`，可选独立于 `.lsp.db` 的扩展数据库（`extDb.enable` / `extDb.path`）
 
 ### 配置差异（相对 master）
 
@@ -67,39 +69,43 @@ acfun:                  # 新增 ACFUN 账号配置
   interval: 25s
   onlyOnlineNotify: false
 
-twitter:                # 新增 mode 选择
-  mode: mirror          # mirror / api
+twitter:                # next 仅 mirror（nitter）模式；api 模式见下方 next-dev
+  baseUrl:
+    - "https://nitter.net/"
+  interval: 30s
+  userAgent:
   unsub: false
-  # api 模式额外字段：
-  auth_token:
-  ct0:
-  bearerToken:
-  queryId:
-  screenName:
 
-douyin:                 # 新增 sessionId
+douyin:                 # 新增 news 类型与 sessionId
   acSignature:
   acNonce:
   sessionId:
   userAgent:
   interval: 30s
 
-weibo:                  # 完全重构
-  mode: guest           # guest / login / api
+weibo:                  # 重构为 guest / login 两种模式
+  mode: guest           # guest / login
   sub:
   qrlogin: true
-  autorefresh: false
-  apiModeBaseURL: "http://127.0.0.1:5000"
-  snapcastURL: ""
-  disableCookieAlert: false
-  alertGroupId: 0
+
+extDb:                  # 扩展数据库（可选，独立于 .lsp.db）
+  enable: false
+  path: ".ext.db"
+
+telegram:               # Telegram 推送
+  enable: false
+  token: ""
+  proxy:                # next：独立的代理配置（http/https/socks5/socks5h）
+    enable: false
+    url: ""
+  endpoint: ""
 ```
 
 ---
 
 ## next-dev 分支的新增内容
 
-`next-dev` 是最前沿的开发分支，包含 `next` 的全部内容，并额外新增：
+`next-dev` 是最前沿的开发分支，功能上覆盖 `next` 的内容（分支历史上并非直接包含关系），并额外新增：
 
 ### 新增订阅源
 
@@ -107,15 +113,16 @@ weibo:                  # 完全重构
 |--------|------|------|------|
 | **小红书** | `xhs` | live / news | 需配置 cookies（a1 等），含加密模块 |
 | **Twitch** | `twitch` | live | 需注册 Twitch 应用获取 clientId/clientSecret |
-| **小黑盒** | `heybox`（代码内 `xhh`） | news | 自动生成 smidV2，无需配置 |
+| **小黑盒** | `xhh`（配置键 `heybox.*`） | news | 自动生成 smidV2，无需配置 |
 
 ### 框架级变化
 
 - **适配器抽象**：新增 `adapter` 配置，默认 `onebot-v11`，为未来支持更多协议预留
-- **Telegram 推送**：支持把推送同步到 Telegram（`telegram.enable`）
-- **管理后台**：新增 `admin` HTTP 管理接口（`admin.addr` / `admin.token`）
-- **扩展数据库**：新增 `extDb`，可选独立于 `.lsp.db` 的扩展数据库
+- **Web 管理面板**：内置网页管理端——初始化向导、仪表盘、订阅/权限/命令/模板管理、实时日志与推送记录、平台级启停。
+  配置项 `admin.enable` / `admin.addr` / `admin.token`，详见 [Web 管理面板](webui.md)。
+  该功能由 `webui-embed` 分支开发，已合入 `next-dev`。
 - **YouTube Shorts 支持**：新增 Shorts 推送，带配置加固和测试
+- **推特 API 模式**：新增 `twitter.mode: api`（缺省即 api）、`apiFetchMode`、推文自动翻译（`twitter.translate.*`）、`retweetFullText`、`queryIdRefreshInterval`
 - **微博移动端 API**：新增移动端 API 响应 proto 定义及转换
 - **模板兼容性修复**：`adapter.SenderInfo.Uin` 字段保留为 `UserID` 的别名，老模板无需修改
 
@@ -149,18 +156,43 @@ admin:
   addr: "127.0.0.1:15631"
   token: ""
 
-extDb:
-  enable: false
-  path: ".ext.db"
+weibo:                  # next-dev 相对 next 额外新增：api 模式 / SUB 自动刷新 / SnapCast / Cookie 告警开关
+  mode: api             # guest / login / api
+  autorefresh: false
+  apiModeBaseURL: "http://127.0.0.1:5000"
+  snapcastURL: ""
+  disableCookieAlert: true
 
-telegram:
-  enable: false
-  token: ""
-  proxy:
-    enable: false
-    url: ""
-  endpoint: ""
+twitter:                # next-dev：API 模式（缺省即 api）
+  mode: api             # api（默认）/ mirror
+  apiFetchMode: per_user   # home_timeline / per_user
+  retweetFullText: false
+  translate:
+    enabled: false
+    minInterval: 5s
+    targetLang: zh
+    batchWait: 15s
+  queryIdRefreshInterval: 168h
+  userTweetsQueryId:       # UserTweets API queryId（可选，默认自动获取）
+  auth_token:
+  ct0:
+  bearerToken:
+  queryId:
+  screenName:
+
 ```
+
+---
+
+## lite-reimpl（只读参考分支）
+
+`lite-reimpl` 是 [阿宇](https://github.com/why0209) 私有分支 **DDBOT-Lite** 的**证据驱动重实现**，作为一个**只读参考分支**存在，供研究与逐步移植，**不推荐用于生产**。
+
+- **不是源码复制**：据该分支的 `NOTICE.md`，原作者因工作原因已放弃维护并自行删除原始源码，本分支全部代码以运行成品二进制为唯一依据重新实现
+  （符号表 / 调用图 / 类型层 / `rodata` 字节级还原）。
+- 已获原作者授权，许可证沿用 **AGPL-3.0**。
+- 启用的平台：B 站（直播 / 动态）、微博、抖音、猫耳FM。
+- **未做端到端生产验证**；已知差异见该分支根目录的 `NOTICE.md`。
 
 ---
 
@@ -168,9 +200,9 @@ telegram:
 
 ```mermaid
 flowchart TD
-    A[要部署 DDBOT-WSa?] --> B{需要小红书/Twitch/小黑盒?}
+    A[要部署 DDBOT-WSa?] --> B{需要小红书/Twitch/小黑盒/<br/>微博或推特 API 模式?}
     B -->|是| C[选 next-dev<br/>接受不稳定]
-    B -->|否| D{需要 ACFUN动态/微博API模式/推特api模式?}
+    B -->|否| D{需要 ACFUN动态/Telegram推送/extDb?}
     D -->|是| E[选 next]
     D -->|否| F[选 master<br/>最稳定]
 ```
@@ -178,14 +210,14 @@ flowchart TD
 ### 建议
 
 - **新手 / 生产环境**：用 **master**，配合本文档
-- **想用微博 API 模式、ACFUN 动态、推特 API 模式**：用 **next**
-- **需要小红书 / Twitch / 小黑盒 / Telegram 推送**：用 **next-dev**，但要做好遇到 bug 的准备
+- **想用 ACFUN 动态、Telegram 推送、extDb**：用 **next**
+- **需要小红书 / Twitch / 小黑盒、微博 API 模式、推特 API 模式**：用 **next-dev**，但要做好遇到 bug 的准备
 
 ---
 
 ## 切换分支
 
-下载预编译版本时，在 [Releases](https://github.com/cnxysoft/DDBOT-WSa/releases) 选择对应分支的构建产物。
+下载预编译版本时，在 [Releases](https://github.com/cnxysoft/DDBOT-WSa/releases) 选择对应产物：`master` 用 `fix_A0xx` 系列标签，`next-dev` 用 `Preview (next-dev)` 预发布；`next` 没有预编译产物，需要自行编译。
 
 从源码编译：
 
@@ -216,11 +248,11 @@ make build
 | 斗鱼 | ✅ | ✅ | ✅ |
 | 虎牙 | ✅ | ✅ | ✅ |
 | ACFun | 直播 | 直播 + 动态 | 直播 + 动态 |
-| YouTube | ✅ | ✅ 模板 + Shorts | ✅ Shorts 加固 |
-| 微博 | ✅ 游客 | ✅ 三模式 + 告警 | ✅ 移动端 API |
+| YouTube | ✅ | ✅ 模板 | ✅ 模板 + Shorts |
+| 微博 | ✅ 游客 | ✅ guest / login 两模式 | ✅ 三模式 + 告警、移动端 API |
 | TwitCasting | ✅ | ✅ | ✅ |
-| 推特 | ✅ mirror | ✅ mirror + api | ✅ |
-| 抖音 | ✅ | ✅ + sessionId | ✅ |
+| 推特 | ✅ mirror | ✅ mirror | ✅ mirror + api（默认 api） |
+| 抖音 | ✅ live | ✅ live + news、sessionId | ✅ |
 | 小红书 | ❌ | ❌ | ✅ |
 | Twitch | ❌ | ❌ | ✅ |
 | 小黑盒 | ❌ | ❌ | ✅ |

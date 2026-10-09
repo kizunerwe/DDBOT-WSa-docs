@@ -34,12 +34,7 @@ DDBOT-WSa 的核心定位：
 
 ### 为什么不直接登录 IM
 
-直接走 IM 协议（纯血 DDBOT 走 QQ 协议的方式）有几个痛点：
-
-- 需要维护签名服务器（sign-server），否则容易登录失败或被风控
-- 协议变动频繁，登录代码需要持续跟进
-- 设备锁、滑块验证等人工干预多
-- 纯血 DDBOT 依赖的 MiraiGo 已失效，无法登录 QQ
+直接登录 IM 需要自己处理登录协议与签名（仓库里 vendored 的 `bot/` 就保留了向 `sign-server` 请求签名的逻辑），维护成本高。
 
 改用 **OneBot 协议**后，登录 IM 这件事交给专门的实现端（LLOneBot / NapCat / Lagrange 等，它们各自跟进 IM 协议），DDBOT 只负责：
 
@@ -90,7 +85,7 @@ flowchart LR
 - **`lsp` 包**是框架核心，包含订阅管理、命令处理、模板引擎、事件分发
 - **`concern` 包**是订阅抽象，每个订阅源（B 站、微博等）实现 `Concern` 接口注册进来
 - **`buntdb`** 是嵌入式 KV 数据库，文件 `.lsp.db`，存储所有订阅、权限、配置
-- **WebSocket** 是 DDBOT 与 OneBot 实现端之间的唯一通道，地址默认 `ws://127.0.0.1:15630/ws`
+- **WebSocket** 是 DDBOT 与 OneBot 实现端之间的唯一通道，`master` / `next` 默认监听 `0.0.0.0:15630`，端点 `ws://127.0.0.1:15630/ws`
 
 ---
 

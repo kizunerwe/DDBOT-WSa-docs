@@ -38,16 +38,17 @@ autoreply:
 
 ## 可用变量
 
-自定义命令可使用 [通用变量](syntax.md)：
+自定义命令可用的变量（通用变量另见[语法与变量](syntax.md)）：
 
-| 变量 | 含义 |
-|------|------|
-| `group_code` / `group_name` | 群信息 |
-| `member_code` / `member_name` | 触发者 |
-| `cmd` | 命令名 |
-| `args` | 参数数组 |
-| `full_args` | 完整参数字符串 |
-| `at_targets` | @的成员 QQ 号 |
+| 变量 | 含义 | 可用范围 |
+|------|------|------|
+| `member_code` / `member_name` | 触发者 | 群 / 私聊自定义命令 |
+| `cmd` | 命令名 | 群 / 私聊自定义命令 |
+| `args` | 参数数组 | 群 / 私聊自定义命令 |
+| `full_args` | 完整参数字符串 | 群 / 私聊自定义命令 |
+| `template_name` | 当前模板名 | 群 / 私聊自定义命令 |
+| `group_code` / `group_name` | 群信息 | 仅群自定义命令 |
+| `at_targets` | @的成员 QQ 号 | 仅群自定义命令 |
 
 ---
 

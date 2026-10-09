@@ -6,6 +6,8 @@
 
 ## 创建 StateManager
 
+`concern` 包没有通用的 `NewStateManager(option)`，需要按 id 类型选构造函数；第一个参数是站点名（一般用 `Site`），第二个是 `concern.GetNotifyChan()`：
+
 ```go
 type StateManager struct {
     *concern.StateManager
@@ -14,17 +16,27 @@ type StateManager struct {
 
 func NewStateManager(c *Concern) *StateManager {
     s := &StateManager{}
-    s.StateManager = concern.NewStateManager(concern.StateManagerOption{
-        Site:  Site,
-        Types: []concern_type.Type{ExampleType},
-    })
+    // id 是 string（如推特用户名）
+    s.StateManager = concern.NewStateManagerWithStringID(Site, concern.GetNotifyChan())
+    // id 是 int64（如 B 站 UID）时改用：
+    // s.StateManager = concern.NewStateManagerWithInt64ID(Site, concern.GetNotifyChan())
+    // 需要自定义 KeySet 时用：
+    // s.StateManager = concern.NewStateManagerWithCustomKey(Site, keySet, concern.GetNotifyChan())
     // 初始化 EmitQueue（如果用轮询）
     s.UseEmitQueue()
     return s
 }
 ```
 
-`concern.StateManager` 已经提供了 `Add`/`Remove`/`Get`/`FreshIndex` 等方法的默认实现，你的 StateManager 只需嵌入它即可拥有全部能力。
+可用构造函数（见 `lsp/concern/stateManager.go`）：
+
+| 函数 | 说明 |
+|------|------|
+| `NewStateManagerWithStringID(name, notifyChan)` | id 为 string |
+| `NewStateManagerWithInt64ID(name, notifyChan)` | id 为 int64 |
+| `NewStateManagerWithCustomKey(name, keySet, notifyChan)` | 自定义 `KeySet` |
+
+`concern.StateManager` 提供 `FreshIndex`、`UseEmitQueue`、`UseFreshFunc`、`UseNotifyGeneratorFunc` 等能力；`Add`/`Remove`/`Get` 属于 `Concern` 接口，需要在你的 Concern 上实现（内置订阅源通常委托给内嵌的 StateManager 和自己的爬虫逻辑）。
 
 ---
 
@@ -78,36 +90,36 @@ func (c *Concern) FreshIndex(groupCode ...int64) {
 
 ## Notify 生成
 
-轮询产生 Event 后，框架需要知道如何把 Event 变成 Notify（加上群信息）。实现 `NotifyGenerator`：
+轮询产生 Event 后，框架需要知道如何把 Event 变成 Notify（加上群信息）。用 `UseNotifyGeneratorFunc` 配置，且必须在 `Start()` 之前设置，否则会 panic：
 
 ```go
-// 在 StateManager 上配置
-s.SetNotifyGenerator(func(groupCode int64, event concern.Event) concern.Notify {
-    return &ExampleNotify{
-        Event:     event,
-        GroupCode: groupCode,
+s.UseNotifyGeneratorFunc(func(groupCode int64, event concern.Event) []concern.Notify {
+    return []concern.Notify{
+        &ExampleNotify{
+            Event:     event,
+            GroupCode: groupCode,
+        },
     }
 })
 ```
 
-你的 `Notify` 结构体需实现 `ToMessage()` 方法把事件转成 QQ 消息。
+`concern.NotifyGeneratorFunc` 的签名是 `func(groupCode int64, event Event) []Notify`——**返回的是切片**，一个 Event 可对应多个 Notify。你的 `Notify` 结构体需实现 `GetGroupCode()` 和 `ToMessage()` 把事件转成 QQ 消息。
 
 ---
 
 ## 缓存
 
-`StateManager` 内置缓存机制，避免短时间内重复处理同一事件。常见用法：
-
-- **去重 mark**：用 `SetGroupCompactMarkIfNotExist` 标记已处理的事件，避免重复推送（B 站联合投稿去重就用这个）
-- **消息缓存**：用 `SetNotifyMsg` 缓存上一条推送，用于回复
+`StateManager` 继承了 `*localdb.ShortCut`，可直接用 `Set` / `Get` / `SetJson` 等 KV 方法做缓存。内置的 B 站/推特/抖音等实现会在各自的 StateManager 上另加 `SetGroupCompactMarkIfNotExist` / `SetNotifyMsg` 辅助方法（**不是 `concern.StateManager` 自带的**）：
 
 ```go
-// 标记已处理
+// 标记已处理（该方法由具体订阅源的 StateManager 提供）
 err := c.SetGroupCompactMarkIfNotExist(groupCode, compactKey)
 if localdb.IsRollback(err) {
     // 已存在，需要 compact（简化推送）
 }
 ```
+
+通用 KV 用法见 [持久化](persistence.md)。
 
 ---
 

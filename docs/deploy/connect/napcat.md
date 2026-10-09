@@ -24,9 +24,9 @@
 |--------|----|
 | 类型 | 反向 WebSocket |
 | 地址 | `ws://127.0.0.1:15630/ws` |
-| Token | 与 DDBOT 的 `websocket.token` 一致（DDBOT 未配则留空） |
+| Token | 通常留空；`master` / `next` 的 ws-server 不校验 token，`[next-dev]` 配置了 `websocket.token` 时需填一致的值 |
 
-也可以直接编辑 NapCat 的配置文件（`onebot11.json` 或 WebUI 配置），添加反向 WS 项：
+也可以直接编辑 NapCat 的配置文件（`onebot11.json` 或 WebUI 配置），添加反向 WS 项（字段名以 NapCat 当前版本的 WebUI 为准）：
 
 ```json
 {
@@ -48,14 +48,18 @@
     ```yaml
     websocket:
       mode: ws-server
-      ws-server: 0.0.0.0:15630
+      ws-server: 0.0.0.0:15630   # master / next 默认监听全部网卡
     ```
+
+    `master` / `next` 默认监听全部网卡，NapCat 用 `ws://127.0.0.1:15630/ws` 即可连入；这两个分支的 ws-server **不校验 `token`**，NapCat 侧留空即可。
+
+    `[next-dev]` 默认收紧为 `127.0.0.1:15630`：未配置 `token` 时只允许监听回环地址；若 NapCat 在**其它机器或容器**里、需把 `ws-server` 改成它可达的地址，则**必须配置 `token`**，否则拒绝启动。
 
 ---
 
 ## 验证连接
 
-1. DDBOT 日志出现 `有新的ws连接了!!`
+1. DDBOT 日志出现 `有新的ws连接了!!`（`[next-dev]` 为 `WebSocket client connected (ws-server mode)`）
 2. 私聊 BOT 发 `/ping`，收到 `pong` 即正常
 
 ---

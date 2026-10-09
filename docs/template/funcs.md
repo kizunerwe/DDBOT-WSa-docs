@@ -1,6 +1,6 @@
 # 模板函数
 
-DDBOT 模板内置了大量函数，本页按分类列出全部函数。WSa 新增的函数有标注。
+DDBOT 模板内置了大量函数，本页按分类列出常用函数，另有若干内部/实验函数未在此列出。WSa 新增的函数有标注。
 
 !!! tip "函数分类"
     左侧目录可快速跳转到各分类。
@@ -55,8 +55,10 @@ DDBOT 模板内置了大量函数，本页按分类列出全部函数。WSa 新�
 | `{{ bot_uin }}` | 获取 BOT 的 QQ 号 |
 | `{{ member_info .group_code .member_code }}` | 获取群成员信息，返回 `name`/`gender`/`permission`/`uin` |
 | `{{ member_list .group_code }}` | 获取群成员列表（WSa） |
-| `{{ isAdmin .member_code .group_code }}` | 检查是否管理员（WSa） |
+| `{{ isAdmin .member_code .group_code }}` | 检查是否为 BOT 管理员或 BOT 授予的群管理员（WSa） |
 | `{{ getFileUrl .group_code .file_id }}` | 获取群文件下载 URL（WSa） |
+
+`isAdmin` 只查 DDBOT 自己的授权（`Permission:<uin>:Admin`，带群号时再查 `GroupPermission:<群>:<uin>:GroupAdmin`），**不判断 QQ 群的群主/管理员身份**。
 
 `member_info` 返回字段：
 
@@ -81,14 +83,14 @@ DDBOT 模板内置了大量函数，本页按分类列出全部函数。WSa 新�
 | `{{ day }}` | 当月第几天 |
 | `{{ weekday }}` | 本周第几天 [1,7]（v1.0.8+） |
 | `{{ yearday }}` | 当年第几天 [1,365/366] |
-| `{{ getUnixTime 1640995200 "2006-01-02 15:04:05" }}` | Unix 时间戳转格式化字符串（WSa） |
+| `{{ getUnixTime 1640995200 "dateonly" }}` | Unix 时间戳转格式化字符串（WSa） |
 | `{{ getTimeStamp "2022-01-01 12:00:00" }}` | 时间字符串转 Unix 时间戳（WSa） |
-| `{{ getTime "now" "2006-01-02" }}` | 格式化时间，第一参可为 `"now"` 或时间串或 `time.Time`（WSa） |
+| `{{ getTime "now" "dateonly" }}` | 格式化时间，第一参可为 `"now"` 或时间串或 `time.Time`（WSa） |
 
-!!! note "Go 时间格式化"
-    Go 的时间格式化用**参考时间** `2006-01-02 15:04:05`，不是 `YYYY-MM-DD`。
+!!! note "getTime / getUnixTime 的第二参是预设键，不是 Go layout"
+    第二个参数只做预设匹配：`"dateonly"` / `"timeonly"` / `"stamp"` / `"unix"` / `"elapsed"`；都不匹配时按默认的 `2006-01-02 15:04:05`（`time.DateTime`）输出。
 
-    `getTime` 第二参也支持预设：`"datetime"`/`"dateonly"`/`"timeonly"`/`"stamp"`。
+    也就是说传入 `"2006-01-02"` 这类 Go 参考时间不会只输出日期，只会走默认格式。
 
 ---
 
@@ -155,7 +157,7 @@ DDBOT 模板内置了大量函数，本页按分类列出全部函数。WSa 新�
 | `hasSuffix "suf" "str"` | 是否有指定后缀 |
 | `contains "sub" "str"` | 是否包含子串 |
 | `trim " str "` | 去前后空白 |
-| `trimAll "abc" "abcHelloabc"` | 去两端指定字符（WSa） |
+| `trimAll "abc" "abcHelloabc"` | 去两端指定字符 |
 | `trimSuffix "suf" "str"` | 去指定后缀 |
 | `trimPrefix "pre" "str"` | 去指定前缀 |
 | `split "sep" "str"` | 按分隔符分割，返回 list |
@@ -167,12 +169,12 @@ DDBOT 模板内置了大量函数，本页按分类列出全部函数。WSa 新�
 | `title "hello world"` | 单词首字母大写 |
 | `snakecase "FirstName"` | 蛇形命名 |
 | `camelcase "first_name"` | 驼峰命名 |
-| `kebabcase "FirstName"` | 短横线命名（WSa） |
-| `replace "old" "new" "str"` | 替换第一次出现（WSa） |
+| `kebabcase "FirstName"` | 短横线命名 |
+| `replace "str" "old" "new" 1` | 替换（第 4 参为次数，`1` 只替换第一次，`-1` 全部；WSa） |
 | `replaceAll "old" "new" "str"` | 替换全部出现（WSa） |
-| `find "sub" "str"` | 查找第一次出现位置（WSa） |
-| `findLast "sub" "str"` | 查找最后一次出现位置（WSa） |
-| `count "sub" "str"` | 统计子串出现次数（WSa） |
+| `find "str" "sub"` | 查找第一次出现位置（WSa） |
+| `findLast "str" "sub"` | 查找最后一次出现位置（WSa） |
+| `count "str" "sub"` | 统计子串出现次数（WSa） |
 | `uriEncode "hello world"` | URI 编码（WSa） |
 | `uriDecode "hello%20world"` | URI 解码（WSa） |
 
@@ -218,17 +220,17 @@ DDBOT 模板内置了大量函数，本页按分类列出全部函数。WSa 新�
 | `set $dict "key" "val"` | 设置值 |
 | `unset $dict "key"` | 删除 key |
 | `hasKey $dict "key"` | 是否存在 key |
-| `keys $dict` | 获取所有 key（WSa） |
-| `values $dict` | 获取所有值（WSa） |
-| `pluck "key" $d1 $d2` | 从多个 dict 提取指定 key（WSa） |
-| `omit $dict "k1" "k2"` | 排除指定 key（WSa） |
+| `keys $dict` | 获取所有 key |
+| `values $dict` | 获取所有值 |
+| `pluck "key" $d1 $d2` | 从多个 dict 提取指定 key |
+| `omit $dict "k1" "k2"` | 排除指定 key |
 | `pick $dict "k1" "k2"` | 只保留指定 key |
 | `merge $d1 $d2` | 合并，不覆盖已有 key |
 | `mergeOverwrite $d1 $d2` | 合并，覆盖已有 key |
-| `mustMerge $d1 $d2` | 合并（带错误处理，WSa） |
-| `mustMergeOverwrite $d1 $d2` | 覆盖合并（带错误处理，WSa） |
-| `dig "k1" "k2" "default" $dict` | 嵌套查找（WSa） |
-| `deepCopy $obj` | 深拷贝（WSa） |
+| `mustMerge $d1 $d2` | 合并（带错误处理） |
+| `mustMergeOverwrite $d1 $d2` | 覆盖合并（带错误处理） |
+| `dig "k1" "k2" "default" $dict` | 嵌套查找（源码有实现但未注册进模板函数表，模板中不可调用） |
+| `deepCopy $obj` | 深拷贝（源码有实现但未注册进模板函数表，模板中不可调用） |
 
 ---
 
@@ -272,7 +274,7 @@ DDBOT 模板内置了大量函数，本页按分类列出全部函数。WSa 新�
 | `DDBOT_REQ_HEADER` | 自定义 header，list 形如 `["A=B"]` |
 | `DDBOT_REQ_COOKIE` | 自定义 cookie，list 形如 `["A=B"]` |
 | `DDBOT_REQ_PROXY` | 代理控制，见下表 |
-| `DDBOT_REQ_TIMEOUT` | 超时，如 `10s`/`1m`，默认 15s，**不能设 0**（WSa） |
+| `DDBOT_REQ_TIMEOUT` | 超时，如 `10s`/`1m`，默认 15s；设为 0 会回退到默认值（WSa） |
 | `DDBOT_REQ_RETRY` | 重试次数，如 `3`，默认 0（WSa） |
 
 `DDBOT_REQ_PROXY` 取值：
@@ -335,7 +337,7 @@ DDBOT 模板内置了大量函数，本页按分类列出全部函数。WSa 新�
 | `getIListJson $groupCode "site" $msgCtx` | 获取群关注列表 JSON（WSa） |
 | `outputIList $msgCtx $groupCode "site"` | 输出原版 LIST 列表（自带分片，WSa） |
 
-`site` 可不填，输出所有站点。`msgContext` 由 list 命令模板提供。
+`site` 是固定位置参数（必填）；`getIListJson` 的 `msgContext` 是变参，`outputIList` 的 `msgContext` 不是。传空字符串 `""` 时输出所有站点；`msgContext` 由 list 命令模板提供。
 
 ---
 

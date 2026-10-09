@@ -81,7 +81,7 @@ cronjob:
       group: []
 ```
 
-`定时1` 每分钟触发，私聊 QQ 123456 发送 `custom.cronjob.每分钟提醒.tmpl` 内容。
+`每分钟提醒` 每分钟触发，私聊 QQ 123456 发送 `custom.cronjob.每分钟提醒.tmpl` 内容。
 
 ### 每小时群聊
 

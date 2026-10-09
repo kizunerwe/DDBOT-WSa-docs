@@ -10,7 +10,7 @@ DDBOT-WSa 复用了 DDBOT 的数据库结构（`.lsp.db`），但底层从「直
 
 1. 备份原 `.lsp.db`
 2. 替换程序文件
-3. **修改数据库里的字段前缀**（`ae` -> `ex`），让 WSa 能正确初始化
+3. 启动 WSa，让内置的数据库版本迁移自动执行
 4. 配置 WebSocket 连接一个 OneBot 实现端
 
 ---
@@ -35,38 +35,38 @@ cp application.yaml application.yaml.bak
 
 把旧的 DDBOT 程序文件替换为 DDBOT-WSa 的新版本（下载见 [安装](../install.md)）。
 
-### 4. 修改数据库字段
+### 4. 让程序自动迁移数据库
 
-这是迁移的关键一步。用文本编辑器（VSCode / Notepad++，**不要用记事本**）打开 `.lsp.db`：
+旧库不需要手工改动。WSa 启动时会检查数据库版本，检测到旧版本会：
 
-1. 搜索 `ae` 字段
-2. **全部替换为 `ex` 字段**
-3. 保存
+1. 先把当前数据库备份为 `.lsp.db-<Unix 时间戳>`
+2. 日志提示「五秒后将开始更新数据库」
+3. 自动执行迁移（把旧的订阅类型位标记转换成 `live` / `news` 类型串）
 
-只需把 `ae` 改成 `ex`，DDBOT-WSa 就能正确初始化数据库。
-
-!!! warning "为什么是 ae -> ex"
-    纯血 DDBOT 和 WSa 在数据库里用了不同的 key 前缀来标记某些内部状态。直接用旧库启动 WSa 会因为找不到预期的前缀而初始化失败。改前缀是最简单的兼容方式。
+!!! warning "迁移期间不要中断"
+    看到迁移提示后不要按 Ctrl+C，等它执行完。
 
 !!! note "@全体成员可能失效"
     迁移后 `@全体成员` 配置可能失效，建议重新配置一遍 `/config at_all`。
 
 ### 5. 配置 WebSocket
 
-编辑 `application.yaml`，加上 WebSocket 配置（纯血 DDBOT 没有这一段）：
+编辑 `application.yaml`，加上 WebSocket 配置（直接以 WSa 首次运行生成的新配置为准更省事）：
 
 ```yaml
 websocket:
   mode: ws-server
-  ws-server: 0.0.0.0:15630
+  ws-server: 0.0.0.0:15630   # master / next 默认监听全部网卡
 ```
+
+`master` / `next` 默认监听 `0.0.0.0:15630`，且 ws-server **不校验 `token`**。`[next-dev]` 默认收紧为 `127.0.0.1:15630`：未配置 `token` 时只允许监听回环地址；若实现端在**其它机器或容器**里、需把 `ws-server` 改成它可达的地址，则**必须配置 `token`**，否则拒绝启动。
 
 然后按 [连接 OneBot](index.md) 对接一个实现端。
 
 ### 6. 启动并验证
 
 ```bash
-./DDBOT
+./DDBOT-WSa
 ```
 
 检查日志：

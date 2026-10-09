@@ -32,7 +32,7 @@
 默认模板：
 
 ```text
-DDBOT是一个多功能单推专用推送机器人，支持b站、斗鱼、油管、虎牙推送
+DDBOT是一个多功能单推专用推送机器人，支持b站、斗鱼、油管、虎牙、推特推送
 ```
 
 ---
@@ -48,19 +48,19 @@ DDBOT是一个多功能单推专用推送机器人，支持b站、斗鱼、油�
 ??? note "默认模板"
     ```text
     常见订阅用法：
-    以示例UID:97505为例
-    首先订阅直播信息：{{ prefix }}watch 97505
-    然后订阅动态信息：{{ prefix }}watch -t news 97505
+    以作者UID:97505为例
+    首先订阅直播信息：{{ prefix .command.WatchCommand }} 97505
+    然后订阅动态信息：{{ prefix .command.WatchCommand }} -t news 97505
     由于通常动态内容较多，可以选择不推送转发的动态
-    {{ prefix }}config filter not_type 97505 转发
+    {{ prefix .command.ConfigCommand }} filter not_type 97505 转发
     还可以选择开启直播推送时@全体成员：
-    {{ prefix }}config at_all 97505 on
+    {{ prefix .command.ConfigCommand }} at_all 97505 on
     以及开启下播推送：
-    {{ prefix }}config offline_notify 97505 on
+    {{ prefix .command.ConfigCommand }} offline_notify 97505 on
     BOT还支持更多功能，详细命令介绍请查看命令文档：
-    https://cnxysoft.github.io/DDBOT-WSa/commands/index
-    使用时请把示例UID换成你需要的UID
-    当您完成所有配置后，可以使用{{ prefix }}silence命令，让bot专注于推送，在群内发言更少
+    https://github.com/cnxysoft/DDBOT-WSa/blob/master/EXAMPLE.md
+    使用时请把作者UID换成你需要的UID
+    当您完成所有配置后，可以使用{{ prefix .command.SilenceCommand }}命令，让bot专注于推送，在群内发言更少
     {{- cut -}}
     B站专栏介绍：https://www.bilibili.com/read/cv10602230
     如果您有任何疑问或者建议，请反馈到交流群：755612788（已满）、980848391
@@ -108,13 +108,13 @@ pong
 可使用 `outputIList` 输出原版列表，或用 `getIListJson` 自定义渲染：
 
 ```text
-{{ outputIList .msg_context .group_code "bilibili" }}
+{{ outputIList .message_context .group_code .list_site }}
 ```
 
 或：
 
 ```text
-{{- $json := getIListJson .group_code "bilibili" -}}
+{{- $json := getIListJson .group_code .list_site .message_context -}}
 {{- $list := jsonToDictOrArray $json true -}}
 {{ range $list -}}
 {{ .name }} ({{ .id }})

@@ -47,57 +47,62 @@ func main() {
 
 ## key 规范
 
-所有插件共用一个 `.lsp.db`，key **必须带唯一前缀**，避免冲突。
+所有插件共用一个 `.lsp.db`，key 需要避免与其他订阅源冲突。
 
-### 命名约定
+内置订阅源并没有给 key 加 `site` 前缀，而是用不同的 key 名区分。key 生成集中在 `lsp/buntdb/key.go`：
 
-```
-<site>:<用途>:<标识>
-```
-
-示例：
-
-| key | 含义 |
+| key 函数 | 生成的 key |
 |-----|------|
-| `bilibili:userinfo:97505` | B 站用户信息 |
-| `bilibili:attention_list` | B 站关注列表缓存 |
-| `twitter:userinfo:elonmusk` | 推特用户信息 |
-| `weibo:cookie:visitor` | 微博游客 cookie |
+| `BilibiliUserInfoKey(97505)` | `UserInfo:97505` |
+| `TwitterUserInfoKey("elonmusk")` | `TwitterUserInfo:elonmusk` |
+| `WeiboUserInfoKey(<id>)` | `WeiboUserInfo:<id>` |
+
+`NamedKey` 用 `:` 把各部分拼起来；自定义插件应选一个不与内置重名的 key 名。
 
 ### keyset 文件
 
-参考 `lsp/bilibili/keyset.go`：
+`StateManager` 需要一个 `KeySet` 来隔离订阅状态 / 配置的 key，参考 `lsp/bilibili/keyset.go`：
 
 ```go
 package bilibili
 
-const (
-    keyPrefix        = "bilibili"
-    KeyUserInfo      = keyPrefix + ":userinfo:"
-    KeyAttentionList = keyPrefix + ":attention_list"
-    KeyCompactMark   = keyPrefix + ":compact:"
-)
+import "github.com/cnxysoft/DDBOT-WSa/lsp/buntdb"
 
-// 封装成函数
-func userInfoKey(id int64) string {
-    return fmt.Sprintf("%s%d", KeyUserInfo, id)
+type keySet struct{}
+
+func (k *keySet) GroupAtAllMarkKey(keys ...interface{}) string {
+    return buntdb.BilibiliGroupAtAllMarkKey(keys...)
 }
 
-func compactKey(groupCode int64, id interface{}) string {
-    return fmt.Sprintf("%s%d:%v", KeyCompactMark, groupCode, id)
+func (k *keySet) GroupConcernStateKey(keys ...interface{}) string {
+    return buntdb.BilibiliGroupConcernStateKey(keys...)
+}
+
+func (k *keySet) GroupConcernConfigKey(keys ...interface{}) string {
+    return buntdb.BilibiliGroupConcernConfigKey(keys...)
+}
+
+func (k *keySet) FreshKey(keys ...interface{}) string {
+    return buntdb.BilibliFreshKey(keys...)
+}
+
+func (k *keySet) ParseGroupConcernStateKey(key string) (int64, interface{}, error) {
+    return buntdb.ParseConcernStateKeyWithInt64(key)
 }
 ```
 
+`KeySet` 接口要求这 5 个方法齐全（含 `GroupAtAllMarkKey`），缺一个都无法编译通过。自定义 `KeySet` 通过 `NewStateManagerWithCustomKey(Site, keySet, ...)` 传入，见 [StateManager](statemanager.md)。
+
 ### extraKey 模式
 
-推特/抖音用 `extraKey` 结构体封装：
+推特/抖音用 `extraKey` 结构体封装普通数据 key：
 
 ```go
 // lsp/twitter/extraKey.go
 type ExtraKey struct{}
 
-func (e *ExtraKey) UserInfoKey(id interface{}) string {
-    return fmt.Sprintf("twitter:userinfo:%v", id)
+func (e *ExtraKey) UserInfoKey(keys ...interface{}) string {
+    return buntdb.TwitterUserInfoKey(keys...)
 }
 ```
 
@@ -123,20 +128,23 @@ key := localdb.Key("OnGroupMemberJoined", groupCode, uin, joinTime)
 localdb.Set(key, "", localdb.SetExpireOpt(time.Minute*2))
 ```
 
-`Key()` 会把各部分用分隔符拼起来。
+`Key()` 会把各部分用 `:` 拼起来。
 
 ---
 
 ## 全局 key
 
-部分 key 是框架级的，插件不应使用这些前缀：
+部分 key 是框架级的，插件不应使用这些 key 名：
 
-| 前缀 | 用途 |
+| key 名前缀 | 用途 |
 |------|------|
-| `lsp:` | 框架自身状态 |
-| `permission:` | 权限数据 |
-| `version:` | 版本号 |
-| `ddbot:` | 框架配置 |
+| `Permission` | BOT 管理员 |
+| `GroupPermission` | 群管理员（BOT 授予） |
+| `GroupEnable` / `GlobalEnable` | 群 / 全局命令开关 |
+| `BlockList` | 黑名单 |
+| `Version` / `DDBotReleaseKey` | 版本与更新 |
+
+对应 `lsp/buntdb/key.go` 里的 `PermissionKey` / `GroupPermissionKey` / `GroupEnabledKey` / `GlobalEnabledKey` / `BlockListKey` / `VersionKey` / `DDBotReleaseKey`。
 
 ---
 

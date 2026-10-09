@@ -1,6 +1,9 @@
 # 更新日志
 
-DDBOT-WSa 的版本更新记录。原始记录来自仓库 `UPDATE.md`。
+DDBOT-WSa 的版本更新记录。原始记录来自仓库的 `UPDATE.md`（位于 `next` / `next-dev` 分支；`master` 分支只有 `README.md`）。
+
+!!! info "条目归属"
+    历史条目记录的是 WSa 主线（对应 `master`）的默认值与行为；某项改动只属于 `next` / `next-dev` 时，会在该条目下单独标注分支。
 
 ---
 
@@ -28,7 +31,7 @@ DDBOT-WSa 的版本更新记录。原始记录来自仓库 `UPDATE.md`。
 - 支持自定义 B 站动态推送模板（`notify.group.bilibili.news.tmpl`，变量 `.dynamic`）
 - 支持自定义私聊无效指令触发模板（`command.private.unknown_cmd_tips.tmpl`）
 - 新增群文件上传事件并支持自定义模板（`trigger.group.upload.tmpl`）
-- 新增 BOT 离线通知模板（`notify.bot.offline.tmpl`，需启用心跳上报 + cooldown）
+- 新增 BOT 离线通知模板（`notify.bot.offline.tmpl`，需在实现端启用心跳上报；每次离线心跳都会触发，建议给模板设置冷却，避免重复通知）
 - 新增模板函数：`downloadFile`、`lsDir`、`getEleType`、`toJson`
 
 ### 2025-03-31 0.3.8 (Wsa)
@@ -280,6 +283,7 @@ DDBOT-WSa 的版本更新记录。原始记录来自仓库 `UPDATE.md`。
 
 - 完善日志分级（调低 loglevel 即可不用看 base64）
 - 开放 ws 端口设置，默认 `ws-server: 0.0.0.0:15630`
+    - 分支/版本注：`master` / `next` 至今仍为该默认值（监听全部网卡，且 ws-server 不校验 `token`）；该默认值只在 `next-dev` 收紧为 `127.0.0.1:15630`（仅本机），且监听非回环地址时必须配置 token，否则拒绝启动。
 
 ---
 

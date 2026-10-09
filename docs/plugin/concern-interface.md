@@ -139,23 +139,39 @@ func NewConcern(notify chan<- concern.Notify) *Concern {
 
 ## Add / Remove / Get
 
-通常直接复用 `concern.StateManager` 的默认实现，无需自己写：
+`concern.StateManager` **没有与接口同签名的** `Add` / `Remove` / `Get` 方法：`Add` / `Remove` 完全不存在；`Get` 只有内嵌 `*localdb.ShortCut` 带来的 KV 方法 `Get(key string, opt ...OptionFunc) (string, error)`，与接口要求的 `Get(id interface{}) (IdentityInfo, error)` 同名但签名不同。它提供的是 `AddGroupConcern` / `RemoveGroupConcern` / `GetConcern`（只返回订阅类型）。接口要求的这三个方法需要自己实现，通常在自己的实现里转发过去：
 
 ```go
 func (c *Concern) Add(ctx mmsg.IMsgCtx, groupCode int64, id interface{}, ctype concern_type.Type) (concern.IdentityInfo, error) {
-    return c.StateManager.Add(ctx, groupCode, id, ctype)
+    // 先通过 id 查询订阅对象信息（确认 id 存在并拿到名字）
+    info, err := c.FindOrLoadUserInfo(id)
+    if err != nil {
+        return nil, err
+    }
+    if _, err = c.StateManager.AddGroupConcern(groupCode, id, ctype); err != nil {
+        return nil, err
+    }
+    return info, nil
 }
 
 func (c *Concern) Remove(ctx mmsg.IMsgCtx, groupCode int64, id interface{}, ctype concern_type.Type) (concern.IdentityInfo, error) {
-    return c.StateManager.Remove(ctx, groupCode, id, ctype)
+    info, _ := c.Get(id)
+    if _, err := c.StateManager.RemoveGroupConcern(groupCode, id, ctype); err != nil {
+        return nil, err
+    }
+    return info, nil
 }
 
 func (c *Concern) Get(id interface{}) (concern.IdentityInfo, error) {
-    return c.StateManager.Get(id)
+    // GetConcern 只返回订阅类型；订阅对象信息需要自己维护
+    if _, err := c.StateManager.GetConcern(id); err != nil {
+        return nil, err
+    }
+    return c.FindOrLoadUserInfo(id)
 }
 ```
 
-如果订阅时需要做额外操作（如 B 站自动关注），可在自己的 `Add` 里实现后调用 `StateManager.Add`。
+如果订阅时需要做额外操作（如 B 站自动关注），可在自己的 `Add` 里实现后再调用 `StateManager.AddGroupConcern`。
 
 ---
 

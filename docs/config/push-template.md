@@ -27,9 +27,9 @@ dispatch:
   largeNotifyLimit: 50
 ```
 
-当一次推送需要发送到**超过 `largeNotifyLimit` 个群**时，DDBOT 会增大推送延迟，保证账号稳定。
+单个事件产生的**通知条数** `len(notifies) >= largeNotifyLimit` 时，改为逐条推送、每条间隔 `1 + 2×cnt` 秒（`cnt` 是并发的大推送计数），以保证账号稳定。日志会同时打印消息条数与群数，但判定用的是消息条数。
 
-默认 50。私人 bot 几乎不会触及，无需修改。
+默认 50（未配置或 <=0 时取 50）。私人 bot 几乎不会触及，无需修改。
 
 ---
 
@@ -44,7 +44,7 @@ notify:
 
 | 值 | 说明 |
 |----|------|
-| `1`（默认） | 串行推送，优先保证账号稳定 |
+| `1`（默认） | 串行推送，优先保证账号稳定；<=0 时也按 1 处理 |
 | 更大值 | 出现推送堆积时可调高，加快消化速度 |
 
 !!! tip "推送堆积时调高"
@@ -56,13 +56,15 @@ notify:
 
 ```yaml
 template:
-  enable: false
+  enable: true
 ```
 
 | 值 | 说明 |
 |----|------|
-| `false`（默认） | 不启用模板，使用内置默认格式 |
-| `true` | 启用模板，自动创建 `template/` 目录，热重载自定义模板 |
+| `false` | 不启用模板，使用内置默认格式（显式写 `false` 与键缺失效果相同） |
+| `true`（生成配置默认） | 启用模板，自动创建 `template/` 目录，热重载自定义模板 |
+
+自动生成的 `application.yaml` 里写的是 `enable: true`，即新装的 BOT 默认启用模板。
 
 启用后启动日志会显示「已启用模板」。
 
@@ -147,7 +149,7 @@ customCommandPrefix:
 
 ### 注意事项
 
-- 命令名不区分大小写（v0.3.6b 修复了小写失效问题）
+- 命令名**区分大小写**：`lsp/cfg/config.go` 的 `MatchCmdWithPrefix` 用 `v+k == cmd` 精确比较，解析器也不做大小写归一（`lsp/parser/parser.go`）。changelog 里 v0.3.6b 的「修复小写失效」指的是配置键 `customCommandPrefix` 也允许写成小写 `customcommandprefix`（`lsp/cfg/config.go` 的 `all["customcommandprefix"]` 回退分支：`master` / `next` 为 67 行、`[next-dev]` 为 78 行），与命令名无关
 - 多个命令可分别配置不同前缀
 - 修改后**热重载**，无需重启
 
@@ -159,7 +161,7 @@ customCommandPrefix:
 flowchart LR
     A[订阅源更新] --> B[concern.emitInterval 轮询]
     B --> C{dispatch.largeNotifyLimit}
-    C -->|超阈值| D[增大延迟]
+    C -->|通知条数 >= 阈值| D[逐条增大间隔]
     C -->|正常| E[notify.parallel 并发推送]
     E --> F{template.enable?}
     F -->|是| G[渲染模板]

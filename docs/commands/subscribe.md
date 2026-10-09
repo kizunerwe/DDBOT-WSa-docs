@@ -21,7 +21,9 @@
 | 选项 | 默认 | 说明 |
 |------|------|------|
 | `-s` / `--site` | `bilibili` | 订阅网站 |
-| `-t` / `--type` | `live` | 订阅类型 |
+| `-t` / `--type` | 该订阅源类型中按字母序最靠前的一个 | 订阅类型 |
+
+不填 `-t` 时取该订阅源类型集合按字母序排序后的第一个。默认 `live` 的有 B 站、YouTube、斗鱼、虎牙、ACFun、抖音、TwitCasting；默认 `news` 的有微博、推特。`[next-dev]` 另提供小红书 `xhs`（默认 `live`）、小黑盒 `xhh`（默认 `news`）、Twitch `twitch`（默认 `live`）。
 
 ### 例子
 
@@ -180,10 +182,13 @@
 | YouTube | `youtube` | channel ID（`UC...`）或 `@handle` |
 | 微博 | `weibo` | 用户 UID（`weibo.com/u/<uid>`） |
 | TwitCasting | `twitcasting` | 用户 ID |
-| 推特 | `twitter` | 用户名（不带 @） |
+| 推特 | `twitter` | 用户名（可带/不带开头的 `@`，代码会去掉 `@`） |
 | 抖音 | `douyin` | 抖音号 |
+| 小红书 `[next-dev]` | `xhs` | 用户 ID |
+| 小黑盒 `[next-dev]` | `xhh` | 用户 ID（配置键在 `heybox.*`） |
+| Twitch `[next-dev]` | `twitch` | 频道登录名 |
 
-详细说明见 [订阅源](../sources/index.md) 各页面。
+标注 `[next-dev]` 的订阅源仅在 `next-dev` 分支提供；详细说明见 [订阅源](../sources/index.md) 各页面。
 
 ---
 
@@ -204,7 +209,7 @@
 
 - B 站：检查是否配置账号/cookie，或粉丝数是否满足 `minFollowerCap`
 - 抖音：检查 `acSignature`/`acNonce` 是否填写
-- YouTube：国内需配代理
+- YouTube：国内需配代理（fetch 请求走 `PreferOversea` 代理）
 
 ### 订阅了但没推送
 

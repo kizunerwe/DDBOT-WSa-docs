@@ -13,11 +13,14 @@ DDBOT-WSa 新增了对抖音直播订阅的支持（测试阶段）。
 /watch -s douyin <抖音号>
 ```
 
-只支持 `live` 类型（直播）。
+`master` 只支持 `live`（直播）；`news`（视频）为 `[next]` 新增。不指定 `-t` 时默认 `live`。
 
 ```bash
 # 订阅抖音直播
 /watch -s douyin <抖音号>
+
+# 订阅抖音视频（news，[next]）
+/watch -s douyin -t news <抖音号>
 
 # 取消订阅
 /unwatch -s douyin <抖音号>
@@ -25,7 +28,7 @@ DDBOT-WSa 新增了对抖音直播订阅的支持（测试阶段）。
 
 ---
 
-## 配置（master）
+## 配置
 
 抖音需要从浏览器获取 cookie 来通过人机验证：
 
@@ -33,33 +36,25 @@ DDBOT-WSa 新增了对抖音直播订阅的支持（测试阶段）。
 douyin:
   interval: 30s
   userAgent:
-  acSignature:    # __ac_signature cookie
-  acNonce:        # __ac_nonce cookie
+  acSignature:      # __ac_signature cookie
+  acNonce:          # __ac_nonce cookie
+  # 以下配置 [next] 起才被读取：
+  sessionId:        # 会话 cookie，视频/用户信息接口用
+  onlyOnlineNotify: false
 ```
 
 | 字段 | 说明 |
 |------|------|
-| `interval` | 检测间隔，过快触发验证 |
+| `interval` | 检测间隔；未配置默认 30s |
 | `userAgent` | 浏览器 UA，**必须与获取 cookie 时一致** |
 | `acSignature` | `__ac_signature` cookie |
 | `acNonce` | `__ac_nonce` cookie |
+| `sessionId` | `[next]` 的 `sessionId` cookie，`master` 无此键 |
+| `onlyOnlineNotify` | `[next]` 是否不推送 Bot 离线期间的内容 |
 
-`acSignature` 或 `acNonce` 留空时，抖音订阅模块不会启动。
+`acSignature` 或 `acNonce` **任一**留空时，抖音订阅模块不会启动（`Stop=true`，日志提示「抖音Cookie未设置，将关闭抖音推送功能」）；`sessionId` 留空不影响启动。`master` 只有 `live`，没有 `sessionId` 键，也没有 `news` 类型（`git show origin/master:lsp/douyin/init.go`、`origin/master:lsp/douyin/concern.go`）。
 
 详见 [抖音配置](../config/douyin.md)。
-
-!!! tip "next 分支新增 sessionId"
-    `next` 分支额外需要 `sessionId` cookie，并重构了已推送推文的过滤逻辑：
-
-    ```yaml
-    douyin:
-      acSignature:
-      acNonce:
-      sessionId:        # next 分支新增
-      userAgent:
-      interval: 30s
-      onlyOnlineNotify: false
-    ```
 
 ---
 
@@ -71,7 +66,7 @@ douyin:
 - UA 变化导致验证失败
 - 频繁请求触发验证码
 
-DDBOT 检测到人机验证时会**在日志和推送中提示**，此时需重新获取 cookie 并更新配置。
+`master` 检测到人机验证时会在**日志**中输出错误提示：字符串「检测到人机验证」由 `ParseUserInfoResp` 作为 error 返回，最终由 `freshLiveInfo` 以「查找用户信息失败：检测到人机验证…」记入日志（`fresh` 循环把该错误 `continue` 掉，因此不会走到 `watchCore error`）；代码中没有把该提示推送到群/私聊的路径。`[next]` / `[next-dev]` 已无该字符串。
 
 ---
 
@@ -79,13 +74,25 @@ DDBOT 检测到人机验证时会**在日志和推送中提示**，此时需重�
 
 模板名：`notify.group.douyin.live.tmpl`
 
+| 变量 | 类型 | 含义 | 分支 |
+|------|------|------|------|
+| `living` | bool | 是否正在直播 | master |
+| `name` | string | 主播昵称 | master |
+| `url` | string | 直播间链接 | master |
+| `title` | string | 直播标题 | `[next]` |
+| `cover` | string | 封面或头像 | `[next]` |
+
+`master` 的 data map 只有 `uid` / `name` / `roomId` / `living` / `url`，模板本身也只用到 `living` / `name` / `url`。
+
+视频（news，`[next]`）模板名：`notify.group.douyin.news.tmpl`
+
 | 变量 | 类型 | 含义 |
 |------|------|------|
-| `living` | bool | 是否正在直播 |
-| `name` | string | 主播昵称 |
-| `title` | string | 直播标题 |
-| `url` | string | 直播间链接 |
-| `cover` | string | 封面或头像 |
+| `name` | string | 作者昵称 |
+| `date` | string | 发布时间 |
+| `desc` | string | 视频描述 |
+| `cover` | string | 封面 |
+| `url` | string | 视频链接 |
 
 ---
 
@@ -94,7 +101,7 @@ DDBOT 检测到人机验证时会**在日志和推送中提示**，此时需重�
 ### 订阅没启动
 
 - 检查 `acSignature` 和 `acNonce` 是否都填了
-- 看日志是否有 `Stop` 提示
+- 看日志是否有「抖音Cookie未设置」提示
 
 ### 一直触发人机验证
 

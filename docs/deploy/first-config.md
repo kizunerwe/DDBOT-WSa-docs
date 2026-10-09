@@ -22,7 +22,7 @@ DDBOT 启动时会在**当前目录**读取 `application.yaml`，如果不存在
 
 ## 最小配置（扫码登录 + B 站测试）
 
-默认生成的 `application.yaml` 已经能直接用，**不需要改任何东西**就能完成「下载运行 -> 连接 -> 订阅」的全流程。
+默认生成的 `application.yaml` 已经能直接用，**不需要改任何东西**就能完成「下载运行 -> 连接 -> 订阅」的全流程。下面是一份等价的**最小可用配置**，方便看清关键项（实际生成的文件字段更多，还含 `twitter`、`douyin`、`autoreply`、`customCommandPrefix`、`reloadDelay`、`sendFailureReminder`、`offlineQueue` 等）。
 
 ```yaml
 bot:
@@ -41,7 +41,7 @@ template:
 
 websocket:
   mode: ws-server       # 正向 WS，默认监听 15630
-  ws-server: 0.0.0.0:15630
+  ws-server: 0.0.0.0:15630   # master / next 默认监听全部网卡（[next-dev] 默认 127.0.0.1:15630）
 
 logLevel: info
 ```
@@ -67,15 +67,29 @@ BOT 必须有管理员才能正常使用管理命令。两种方式：
 3. BOT 回复「成功 - 您已成为bot管理员」即完成
 
 !!! note "此命令仅在 BOT 没有管理员时生效"
-    一旦设置了管理员，后续再发此命令无效。想换管理员需用方法二或操作数据库。
+    一旦设置了管理员，后续再发此命令无效。注意 `--set-admin` 只是**新增**管理员；要移除旧管理员，可用管理员账号私聊 BOT 发送 `/grant -r Admin -d <QQ>`，或操作数据库。
 
 ### 方法二：命令行 `--set-admin`（BOT 未运行时）
 
 ```bash
-./DDBOT --set-admin 你的QQ号码
+./DDBOT-WSa --set-admin 你的QQ号码
 ```
 
-执行后立即退出，不影响已运行实例。
+执行后立即退出。该命令需要打开 `.lsp.db` 并加文件锁，所以**必须先停掉正在运行的 DDBOT**；否则会因拿不到锁而失败，设置不会生效。
+
+---
+
+## Web 初始化向导（next-dev，可选）
+
+如果你部署的是 `next-dev` 且启用了 [Web 管理面板](webui.md)，第一次打开面板（`admin.token` 为空）会进入 4 步初始化向导：
+
+1. **设置访问密码** —— 即面板登录密码，写入 `admin.token`，设置后无需重启即可登录
+2. **填写 OneBot 连接** —— 可选，支持正向 / 反向；写入后需重启 BOT 才生效，也可整步跳过
+3. **选择主题** —— 仅保存在浏览器本地，不写入配置文件
+4. **确认** —— 完成页给出后续操作指引
+
+!!! note "向导设置的是面板密码，不是 BOT 管理员"
+    向导只负责 Web 面板密码和可选的 OneBot 连接；BOT 的 QQ 管理员仍需用上面的方法一 / 方法二设置。
 
 ---
 

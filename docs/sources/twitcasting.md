@@ -22,7 +22,7 @@ twitcasting:
   clientSecret: xyz
   broadcaster:
     title: false
-    created: true
+    created: false
     image: false
   nameStrategy: "name"
 ```
@@ -31,7 +31,7 @@ twitcasting:
 |------|------|
 | `clientId` / `clientSecret` | App 凭证，必填 |
 | `broadcaster.title` | 是否推送标题（有风控风险，默认 false） |
-| `broadcaster.created` | 是否推送开播时间（默认 true） |
+| `broadcaster.created` | 是否推送开播时间（默认 false） |
 | `broadcaster.image` | 是否推送封面（墙内无法获取，建议有代理才开启） |
 | `nameStrategy` | 名称显示：`name`/`userid`/`both` |
 

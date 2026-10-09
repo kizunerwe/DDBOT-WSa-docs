@@ -12,9 +12,10 @@ DDBOT-WSa 是一个 Go 编译的单文件二进制程序，无外部依赖（除
 
 Release 资产命名因版本和分支而异，常见格式：
 
-- **master 分支**（如 `fix_A041`）：`DDBOT-WSa-fix_A041-windows-amd64.zip`、`DDBOT-WSa-fix_A041-linux-amd64.tar.gz`
-- **较早的 master 版本**（如 `fix_A038` 及之前）：`DDBOT_windows_amd64.exe`、`DDBOT_linux_amd64`（无 `-WSa-` 前缀，无压缩包）
-- **next-dev 预览版**：`DDBOT-darwin-amd64-cgo.zip` / `DDBOT-darwin-amd64-cli.zip`（区分 cgo / cli 构建）
+- **master（A040 及之后，如 `fix_A041`）**：资产是压缩包，如 `DDBOT-WSa-fix_A041-windows-amd64.zip`、`DDBOT-WSa-fix_A041-linux-amd64.tar.gz`，解压后得到可执行文件 `DDBOT-WSa`（Windows 为 `DDBOT-WSa.exe`）
+- **master（A039 及更早，如 `fix_A039_dev2`、`fix_A038`）**：资产本身就是可执行文件，如 `DDBOT_linux_amd64`、`DDBOT_windows_amd64.exe`，无压缩包
+- **`[next-dev]` 预览版**：`DDBOT-<系统>-<架构>-cgo.zip` / `-cli.zip`，解压后得到 `DDBOT-cgo` / `DDBOT-cli`（Windows 带 `.exe` 后缀）
+- **从源码编译**：产出的是 `DDBOT`（见下文「方式二」）
 
 下载时按 `<系统>-<架构>` 匹配即可，文件名前缀的差异不影响使用。
 
@@ -38,9 +39,9 @@ Release 资产命名因版本和分支而异，常见格式：
 
 === "Windows"
 
-    1. 解压 zip，得到 `DDBOT.exe`
-    2. 双击运行，或在该目录打开 PowerShell 运行 `.\DDBOT.exe`
-    3. 首次运行会生成 `application.yaml`（和占位的 `device.json`）
+    1. 解压 zip，得到 `DDBOT-WSa.exe`
+    2. 双击运行，或在该目录打开 PowerShell 运行 `.\DDBOT-WSa.exe`
+    3. 首次运行会生成 `application.yaml`（和占位的 `device.json`；`[next-dev]` 不再生成 `device.json`）
 
 === "Linux"
 
@@ -48,21 +49,21 @@ Release 资产命名因版本和分支而异，常见格式：
     # 解压
     tar -xzf DDBOT-WSa-fix_AXXX-linux-amd64.tar.gz
     # 赋予执行权限
-    chmod +x ./DDBOT
+    chmod +x ./DDBOT-WSa
     # 运行
-    ./DDBOT
+    ./DDBOT-WSa
     ```
 
 === "macOS"
 
     ```bash
     tar -xzf DDBOT-WSa-fix_AXXX-darwin-arm64.tar.gz
-    chmod +x ./DDBOT
-    ./DDBOT
+    chmod +x ./DDBOT-WSa
+    ./DDBOT-WSa
     ```
 
     !!! warning "macOS Gatekeeper 拦截"
-        首次运行可能提示「无法验证开发者」。在「系统设置 -> 隐私与安全性」里点「仍要打开」，或终端运行 `xattr -d com.apple.quarantine ./DDBOT`。
+        首次运行可能提示「无法验证开发者」。在「系统设置 -> 隐私与安全性」里点「仍要打开」，或终端运行 `xattr -d com.apple.quarantine ./DDBOT-WSa`。
 
 ---
 
@@ -83,7 +84,7 @@ go build -o DDBOT ./cmd
 ```
 
 !!! note "为什么需要 Go 1.24"
-    `go.mod` 指定了 `go 1.24.5`，部分依赖（如本地 replace 的 `miraigo`）用到了较新特性。
+    `go.mod` 指定了 `go 1.24.5`（`[next-dev]` 为 `go 1.26.2`）。
 
 ---
 
@@ -92,7 +93,6 @@ go build -o DDBOT ./cmd
 **仅在以下场景需要**：
 
 - 推特订阅推送 m3u8 视频（WSa 新增）
-- 模板里使用视频/语音转换相关功能
 
 安装后把 `ffmpeg` 放到 DDBOT 程序所在目录，或加入系统 `PATH`。
 
@@ -121,7 +121,7 @@ ffmpeg -version
 
 ```
 你的目录/
-├── DDBOT / DDBOT.exe      # 程序本体
+├── DDBOT-WSa / DDBOT-WSa.exe   # 程序本体（源码编译产出为 DDBOT）
 ├── application.yaml        # 配置文件（首次生成）
 ├── device.json             # 历史遗留占位文件（无实质作用）
 ├── .lsp.db                 # 数据库（订阅/权限/配置，运行后生成）
@@ -146,7 +146,7 @@ ffmpeg -version
 
     # 创建会话
     screen -S ddbot
-    ./DDBOT
+    ./DDBOT-WSa
 
     # 离开会话（保持运行）：按 Ctrl+A 然后按 D
     # 重新进入：screen -r ddbot
@@ -165,7 +165,7 @@ ffmpeg -version
     [Service]
     Type=simple
     WorkingDirectory=/path/to/ddbot
-    ExecStart=/path/to/ddbot/DDBOT
+    ExecStart=/path/to/ddbot/DDBOT-WSa
     Restart=on-failure
     RestartSec=10
 
@@ -184,7 +184,7 @@ ffmpeg -version
     直接双击运行保持窗口打开即可。需要后台运行可用 [nssm](https://nssm.cc/) 注册为服务：
 
     ```powershell
-    nssm install ddbot "D:\path\to\DDBOT.exe"
+    nssm install ddbot "D:\path\to\DDBOT-WSa.exe"
     nssm start ddbot
     ```
 
@@ -198,6 +198,8 @@ ffmpeg -version
 WebSocket server started on ws://0.0.0.0:15630/ws
 DDBOT启动完成
 ```
+
+`[next-dev]` 的日志格式为 `WebSocket server starting on ws://127.0.0.1:15630/`。
 
 接下来去 [首次配置](first-config.md) 设置管理员，然后 [连接 OneBot](connect/index.md)。
 
@@ -218,7 +220,7 @@ DDBOT 支持以下命令行参数（用 `kong` 解析）：
 示例：
 
 ```bash
-./DDBOT --version
-./DDBOT --set-admin 12345678
-./DDBOT --debug
+./DDBOT-WSa --version
+./DDBOT-WSa --set-admin 12345678
+./DDBOT-WSa --debug
 ```

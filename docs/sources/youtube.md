@@ -45,7 +45,31 @@ localProxyPool:
 
 ## 推送模板
 
-YouTube 推送使用默认格式（暂无独立模板文件，可通过通用机制自定义）。
+`master` 的 YouTube 推送使用内置文案（`lsp/youtube/model.go` 的 `GetMSG`，硬编码「YTB-xxx正在直播 / 发布了直播预约 / 发布了新视频」），`lsp/template/default/` 下没有 youtube 模板文件。
+
+`[next]` 起改为模板渲染，新增以下模板。
+
+直播模板：`notify.group.youtube.live.tmpl`
+
+| 变量 | 类型 | 含义 |
+|------|------|------|
+| `living` | bool | 是否正在直播（false 时表示直播预约） |
+| `name` | string | 频道名 |
+| `title` | string | 标题 |
+| `url` | string | 链接 |
+| `cover` | string | 封面 |
+| `timestamp` | int64 | 开播/预约时间戳 |
+
+视频（news）模板：`notify.group.youtube.news.tmpl`
+
+| 变量 | 类型 | 含义 |
+|------|------|------|
+| `name` | string | 频道名 |
+| `title` | string | 视频标题 |
+| `cover` | string | 封面 |
+| `url` | string | 视频链接 |
+
+`[next-dev]` 的 data map 额外提供 `is_shorts`（是否为 Shorts）、`publish_timestamp`（发布时间戳）、`duration_seconds`（时长，秒）与 `video_timestamp`；news 模板会使用前三个。`next` 与 `master` 无这些变量（`master` 也没有该模板）。
 
 ---
 

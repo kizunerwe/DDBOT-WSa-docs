@@ -27,7 +27,7 @@
 | macOS | Intel | `DDBOT-WSa-fix_A041-darwin-amd64.tar.gz` |
 
 !!! note "文件名可能不同"
-    不同版本/分支的 Release 命名格式略有差异（早期版本是 `DDBOT_windows_amd64.exe`，next-dev 预览版是 `DDBOT-darwin-amd64-cgo.zip`），按系统+架构匹配即可，前缀差异不影响使用。详见 [安装 - 版本命名规则](../deploy/install.md#版本命名规则)。
+    不同版本/分支的 Release 命名格式略有差异（master A040 起的下载版解压出来是 `DDBOT-WSa` / `DDBOT-WSa.exe`；A039 及更早是 `DDBOT_windows_amd64.exe` 这类裸可执行文件；`[next-dev]` 预览版是 `DDBOT-<系统>-<架构>-cgo.zip` / `-cli.zip`，解压为 `DDBOT-cgo` / `DDBOT-cli`），按系统+架构匹配即可，前缀差异不影响使用。详见 [安装 - 版本命名规则](../deploy/install.md#版本命名规则)。
 
 不知道选哪个？Windows 64 位用户直接选 `windows-amd64`。
 
@@ -37,31 +37,36 @@
 
 === "Windows"
 
-    双击 `DDBOT.exe` 运行。
+    双击 `DDBOT-WSa.exe` 运行（源码编译或更早版本可能是 `DDBOT.exe`）。
 
     首次运行会在当前目录生成两个文件：
 
-    - `device.json` -- 历史遗留占位文件，DDBOT-WSa 中无实质作用，无需特别保护
+    - `device.json` -- 历史遗留占位文件，DDBOT-WSa 中无实质作用，无需特别保护（`[next-dev]` 已不再生成该文件）
     - `application.yaml` -- 配置文件
 
 === "Linux"
 
     ```bash
-    chmod +x ./DDBOT
-    ./DDBOT
+    chmod +x ./DDBOT-WSa
+    ./DDBOT-WSa
     ```
 
-    首次运行会生成 `application.yaml`（以及占位的 `device.json`）。
+    首次运行会生成 `application.yaml`（以及占位的 `device.json`；`[next-dev]` 不再生成 `device.json`）。
 
 !!! info "首次运行无报错即可"
-    此时不需要修改任何配置，DDBOT 会用默认配置启动，并监听 WebSocket 端口 `15630`。看到日志里出现 `WebSocket server started on ws://.../ws` 就说明启动成功。
+    此时不需要修改任何配置，DDBOT 会用默认配置启动，并监听 WebSocket 端口 `15630`。看到日志里出现 `WebSocket server started on ws://0.0.0.0:15630/ws` 就说明启动成功（`[next-dev]` 的日志为 `WebSocket server starting on ws://127.0.0.1:15630/`）。
 
 ---
 
 ## 第 2 步：连接 OneBot 实现端
 
-DDBOT 默认以 **正向 WebSocket（ws-server）** 模式监听 `0.0.0.0:15630`，路径为 `/ws`。
+DDBOT 默认以 **正向 WebSocket（ws-server）** 模式监听 `0.0.0.0:15630`（`master` / `next`，监听全部网卡），WebSocket 端点路径为 `/ws`，即 `ws://127.0.0.1:15630/ws`。
 你需要让 OneBot 实现端**反向连接**到这个地址。
+
+!!! warning "监听地址与 token"
+    `master` / `next` 默认监听全部网卡，实现端用本机地址即可连入；这两个分支的 ws-server **不校验 `token`**，配了也不生效。
+
+    `[next-dev]` 默认收紧为 `127.0.0.1:15630`：未配置 `token` 时只允许监听回环地址；若 OneBot 实现端在**其它机器或容器**里、需把 `ws-server` 改成实现端可达的地址（例如 `0.0.0.0:15630` 或具体网卡 IP），则**必须配置 `websocket.token`**，否则拒绝启动。
 
 常见的实现端及其配置要点：
 
@@ -74,7 +79,7 @@ DDBOT 默认以 **正向 WebSocket（ws-server）** 模式监听 `0.0.0.0:15630`
 
 完整列表与选择建议见 [连接 OneBot](../deploy/connect/index.md)。
 
-连接成功后，DDBOT 日志会显示 `有新的ws连接了!!`，实现端那边也会显示已连接。
+连接成功后，DDBOT 日志会显示 `有新的ws连接了!!`（`[next-dev]` 为 `WebSocket client connected (ws-server mode)`），实现端那边也会显示已连接。
 
 !!! question "正向 / 反向 WebSocket 有什么区别？"
     - **正向（ws-server）**：DDBOT 开端口等实现端连过来（默认）

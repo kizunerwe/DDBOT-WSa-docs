@@ -32,6 +32,7 @@ hide:
 
 - **[快速开始](quickstart/)** —— 3 步跑通：下载运行 → 连接 OneBot → 完成第一次订阅
 - **[部署与连接](deploy/intro/)** —— 安装、首次配置、对接 OneBot 实现端、媒体、迁移、升级
+- **[Web 管理面板](deploy/webui/)** —— next-dev 内置的浏览器管理端：初始化向导、仪表盘、订阅 / 权限 / 模板管理、实时日志
 - **[版本与分支](deploy/branches/)** —— master / next / next-dev 分支差异与选择建议
 - **[配置参考](config/)** —— `application.yaml` 全字段表，按模块逐项说明
 - **[命令手册](commands/)** —— 速查表 + 每条命令的详细用法与示例
@@ -57,19 +58,19 @@ DDBOT 由 [Sora233](https://github.com/Sora233/DDBOT) 开发，最初基于 Mira
 > DDBOT **不是聊天机器人**。它只在「订阅对象有更新」和「答复命令」时主动发言，刻意把交互设计到最小程度，正常聊天永远不会误触它。
 
 !!! info "本文档基于 master 分支"
-    本站内容以 **master 分支**为准。`next` / `next-dev` 分支有更多实验性功能（小红书、Twitch、小黑盒订阅源等），差异说明见 [版本与分支](deploy/branches/)。
+    本站内容以 **master 分支**为准。`next` / `next-dev` 分支有更多实验性功能（如 `next` 的 ACFun 动态、Telegram 推送、extDb，`next-dev` 的小红书、Twitch、小黑盒订阅源和 Web 管理面板等），差异说明见 [版本与分支](deploy/branches/)。
 
 ---
 
 ## 关于本文档
 
-本站是 DDBOT-WSa 的**文档中心**，由 [kizunerwe](https://github.com/kizunerwe) 基于官方资料与源码整理编写，旨在提供一份清晰、全面、跟得上版本演进的文档。
+本站是 DDBOT-WSa 的**文档中心**，由 [kizunerwe](https://github.com/kizunerwe) 维护，旨在提供一份清晰、全面、跟得上版本演进的文档。
 
 **参考与致谢**
 
 本站在编写过程中参考了以下前人文档与资料，在此致谢：
 
-- **官方文档与源码**：[cnxysoft/DDBOT-WSa](https://github.com/cnxysoft/DDBOT-WSa)（仓库 README、INSTALL/EXAMPLE/TEMPLATE/FAQ/UPDATE/FRAMEWORK 等 md，以及源码注释）
+- **官方文档与源码**：[cnxysoft/DDBOT-WSa](https://github.com/cnxysoft/DDBOT-WSa)（源码注释与 `master` 分支的 `README.md`；INSTALL/EXAMPLE/TEMPLATE/FAQ/UPDATE/FRAMEWORK 等 md 位于 `next` / `next-dev` 分支）
 - **晴风《DDBOT 安装教程》**：[ddbot.songlist.icu](https://ddbot.songlist.icu/)（VuePress 搭建的早期社区文档，本站的信息架构与 OneBot 对接章节参考了它的组织方式）
 - **Sora233 的 B 站专栏**：[cv10602230](https://www.bilibili.com/read/cv10602230)（DDBOT 原版介绍）
 

@@ -54,7 +54,7 @@ LLBot 的配置文件在 NTQQ 数据目录的 `data` 文件夹下，**修改后�
 |------|----|------|
 | `enableWsReverse` | `true` | 开启反向 WS（连向 DDBOT） |
 | `wsReverseUrls` | `["ws://127.0.0.1:15630/ws"]` | DDBOT 的 WS 地址 |
-| `token` | 与 DDBOT 一致 | 若 DDBOT 配了 `websocket.token`，这里填同样的值 |
+| `token` | 通常留空 | `master` / `next` 的 ws-server 不校验 token；`[next-dev]` 配置了 `websocket.token` 时这里要填同样的值 |
 
 !!! tip "DDBOT 侧配置"
     DDBOT 的 `application.yaml` 保持默认即可：
@@ -62,15 +62,19 @@ LLBot 的配置文件在 NTQQ 数据目录的 `data` 文件夹下，**修改后�
     ```yaml
     websocket:
       mode: ws-server
-      ws-server: 0.0.0.0:15630
+      ws-server: 0.0.0.0:15630   # master / next 默认监听全部网卡
     ```
+
+    `master` / `next` 默认监听全部网卡，LLBot 用 `ws://127.0.0.1:15630/ws` 即可连入；这两个分支的 ws-server **不校验 `token`**，LLBot 侧留空即可。
+
+    `[next-dev]` 默认收紧为 `127.0.0.1:15630`：未配置 `token` 时只允许监听回环地址；若 LLBot 在**其它机器或容器**里、需把 `ws-server` 改成它可达的地址，则**必须配置 `token`**，否则拒绝启动。
 
 ---
 
 ## 验证连接
 
-1. 确保 DDBOT 已启动，日志显示 `WebSocket server started on ws://0.0.0.0:15630/ws`
-2. LLBot 配置保存后，DDBOT 日志应出现 `有新的ws连接了!!`
+1. 确保 DDBOT 已启动，日志显示 `WebSocket server started on ws://0.0.0.0:15630/ws`（`[next-dev]` 为 `WebSocket server starting on ws://127.0.0.1:15630/`）
+2. LLBot 配置保存后，DDBOT 日志应出现 `有新的ws连接了!!`（`[next-dev]` 为 `WebSocket client connected (ws-server mode)`）
 3. 私聊 BOT 发送 `/ping`，收到 `pong` 即表示双向通信正常
 
 ---
@@ -91,7 +95,7 @@ LLBot 的配置文件在 NTQQ 数据目录的 `data` 文件夹下，**修改后�
 
 ### 媒体发不出
 
-视频/语音/文件发送需要 FFmpeg，见 [媒体与 FFmpeg](media.md)。
+视频/语音/文件由实现端处理，一般无需 DDBOT 侧额外配置；仅推特 m3u8 视频推送需要 FFmpeg，见 [媒体与 FFmpeg](media.md)。
 
 ---
 

@@ -96,19 +96,21 @@ DDBOT 模板基于 Go 标准库 [`text/template`](https://pkg.go.dev/text/templa
 
 ## 通用变量
 
-所有命令模板都能用以下变量：
+命令模板可用的变量（不同模板提供的集合不同）：
 
-| 变量 | 类型 | 含义 | 版本 |
+| 变量 | 类型 | 含义 | 可用范围 |
 |------|------|------|------|
-| `group_code` | int | 触发命令的群号（私聊为空） | - |
-| `group_name` | string | 群名称（私聊为空） | - |
-| `member_code` | int | 触发命令的成员 QQ 号 | - |
-| `member_name` | string | 成员名称 | - |
-| `cmd` | string | 命令名 | v1.0.7+ |
-| `args` | []string | 命令参数数组 | v1.0.7+ |
-| `at_targets` | []int64 | @的成员 QQ 号 | v1.0.8+ |
-| `full_args` | string | 完整参数字符串（含空格） | v1.0.8+ |
-| `template_name` | string | 当前模板名 | v1.0.9+ |
+| `msg` | - | 触发命令的原消息 | 所有命令模板 |
+| `command` | - | 内置命令名映射（如 `.command.HelpCommand`） | 所有命令模板 |
+| `member_code` | int64 | 触发命令的成员 QQ 号 | 所有命令模板 |
+| `member_name` | string | 成员名称 | 所有命令模板 |
+| `group_code` | int64 | 触发命令的群号 | 仅群命令模板；私聊模板不提供这个键，引用得到 `<no value>` |
+| `group_name` | string | 群名称 | 仅群命令模板；私聊模板不提供这个键，引用得到 `<no value>` |
+| `template_name` | string | 当前模板名（v1.0.9+） | 所有命令模板 |
+| `cmd` | string | 命令名（v1.0.7+） | 仅自定义命令 |
+| `args` | []string | 命令参数数组（v1.0.7+） | 仅自定义命令 |
+| `full_args` | string | 完整参数字符串（v1.0.8+） | 仅自定义命令 |
+| `at_targets` | []int64 | @的成员 QQ 号（v1.0.8+） | 仅自定义群命令 |
 
 ### `args` vs `full_args`
 

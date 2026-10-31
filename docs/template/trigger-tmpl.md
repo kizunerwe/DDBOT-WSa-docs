@@ -312,7 +312,7 @@ DDBOT 在收到 QQ 事件（进退群、戳一戳、禁言、群文件上传等�
 
 模板名：`notify.bot.send_failed.tmpl`（WSa 新增）
 
-`master` / `next`：配置 `bot.sendFailureReminder.enable: true` 后，连续发送失败次数达到 `bot.sendFailureReminder.times` 会派发 `BotSendFailedEvent`（`miraigo/client/client.go` 的 `handleSendFailed`），模板被渲染但结果被丢弃。`[next-dev]`：`BotSendFailedEvent` 没有任何派发点，事件不会触发。
+`master` / `next`：配置 `bot.sendFailureReminder.enable: true` 后，连续发送失败次数达到 `bot.sendFailureReminder.times` 会派发 `BotSendFailedEvent`（`miraigo/client/client.go` 的 `handleSendFailed`），模板被渲染但结果被丢弃。`[next-dev]`：该特性已整体移除——`bot.sendFailureReminder` 配置键不再生成、订阅段也已删除，`BotSendFailedEvent` 没有任何派发点，事件不会触发。
 
 | 变量 | 类型 | 含义 |
 |------|------|------|

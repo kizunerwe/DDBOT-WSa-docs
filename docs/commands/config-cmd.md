@@ -200,18 +200,16 @@ B 站动态类型繁多，DDBOT 支持以下常见类型：
 
 ### 私聊查看告警目标
 
-私聊下 `/config weibo_alert` 用于查看告警目标，并登记一个「自定义目标」：
+私聊下 `/config weibo_alert` 只用于**查看**当前真正生效的告警发送对象（**需要 BOT 管理员权限**）：
 
 ```
-/config weibo_alert show               # 查看当前告警目标
-/config weibo_alert set -q <QQ号>      # 登记自定义目标为 QQ（当前不生效）
-/config weibo_alert clear              # 清除登记的自定义目标
+/config weibo_alert show         # 列出实际发送对象
 ```
 
-`set -q` 只是把目标登记到本地数据库，当前**不改变告警去向**（详见下方说明）。私聊下 `-g` 会被根级 `-g`（要操作的 QQ 群号码）吞掉，`/config weibo_alert set -g <群号>` 取不到群号、只会回复「请指定告警目标」，无法用来登记群目标。
+输出分两部分：**BOT 管理员（私聊）** 与 **已启用告警的群**（通过群内 `/config weibo_alert true` 开启的群）。
 
-!!! warning "自定义目标当前不改变告警去向"
-    `set -q` 只是把目标写入本地数据库，只有 `show` 会读取并显示；真正发送告警的代码只遍历 **BOT 管理员（私聊）** 和 **通过 `/config weibo_alert true` 启用告警的群**，不会读取这个自定义目标。因此只要微博 Cookie 告警本身未被禁用（`weibo.disableCookieAlert` 为 false），告警的实际去向就是「BOT 管理员私聊 + 已启用告警的群」，`set` 不会把告警发到指定群或指定 QQ。
+!!! note "早期版本的 `set` / `clear` 已移除"
+    `[next-dev]` 曾提供 `/config weibo_alert set -g <群号>` / `set -q <QQ号>` / `clear` 登记一个「自定义目标」，但那个目标只写进本地数据库、投递逻辑从不读取，**登记了也不会改变告警去向**；同时子命令的 `-g` 与根级 `-g` 短名冲突，群目标实际登记不上。这套写入路径已删除，现在只有 `show`。要控制去向，用群内开关（`true`/`false`）与 BOT 管理员列表。
 
 ---
 

@@ -49,7 +49,7 @@ weibo:
   cookieRefreshAPI: ""    # [next-dev] autorefresh 时用于获取 SUB 的外部 API
   snapcastURL: ""         # [next-dev] guest 模式生成 rid 的 SnapCast 服务
   interval: 60s           # 站点级轮询间隔，仅 [next] / [next-dev] 读取
-  disableCookieAlert: false  # [next-dev] 设为 true 关闭 Cookie/SUB 失效告警
+  disableCookieAlert: false  # [next-dev] false 启用告警；生成值是 true，且键缺失时按关闭处理
 ```
 
 | 模式 | 说明 |
@@ -68,8 +68,8 @@ weibo:
 !!! note "模式未配置时的行为"
     `[next]` 未配置 `weibo.mode` 时固定使用 `guest`；`[next-dev]` 未配置时若已填 `weibo.sub` 则自动使用 `login`，否则 `guest`。
 
-!!! note "`alertGroupId` / `alertQQList` 已失效（`[next-dev]`）"
-    `[next-dev]` 里 `weibo.alertGroupId` / `weibo.alertQQList` 的 getter 仍在（`alertGroupId` 的注释已标 Deprecated），但都没有任何调用者，**填写不起作用**。告警目标改为用 `/config weibo_alert` 控制（群内 `true`/`false`/`show`）；`weibo.disableCookieAlert: true` 可整体关闭告警。私聊的 `set -g` / `set -q` 也只写入数据库、不改变告警去向，详见 [配置命令](../commands/config-cmd.md)。
+!!! note "`alertGroupId` / `alertQQList` 已移除（`[next-dev]`）"
+    `weibo.alertGroupId` / `weibo.alertQQList` 两个键已从生成配置中删除，getter 也没有任何调用者，**填写不起作用**。告警目标由 `/config weibo_alert` 控制：群内 `true`/`false` 开关本群告警，`show` 查看；私聊 `show`（需 BOT 管理员）列出真正生效的发送对象。`weibo.disableCookieAlert: true` 可整体关闭告警。详见 [配置命令](../commands/config-cmd.md)。
 
 ---
 

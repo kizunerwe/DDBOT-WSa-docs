@@ -59,7 +59,7 @@ flowchart LR
     F --> G[发送到群]
 ```
 
-- **轮询**：轮询间隔来源分两类——`bilibili` / `acfun` / `douyin` / `twitter`（以及 `[next-dev]` 的 `twitch`）读各自的 `<site>.interval`；`douyu` / `huya` / `twitcasting` / `youtube` 与 `master` 的 `weibo` 走全局 `concern.emitInterval`。`[next]` / `[next-dev]` 的 `weibo` 与 `[next-dev]` 的 `xhh`（键为 `heybox.interval`）/ `xhs` 改用 `UseEmitQueueWithSiteInterval`（站点 `interval` → `concern.emitInterval` → 内置 5s）。各源按订阅列表依次轮询
+- **轮询**：轮询间隔来源分两类——`bilibili` / `acfun` / `douyin` / `twitter`（以及 `[next-dev]` 的 `twitch`）读各自的 `<site>.interval`；`douyu` / `huya` / `twitcasting` / `youtube` 与 `master` 的 `weibo` 走全局 `concern.emitInterval`（`[next-dev]` 的 `douyu` / `huya` 例外，见下）。`[next]` / `[next-dev]` 的 `weibo`、`[next-dev]` 的 `douyu` / `huya` / `xhh`（键为 `heybox.interval`）/ `xhs` 改用 `UseEmitQueueWithSiteInterval`（站点 `interval` → `concern.emitInterval` → 内置 5s）。各源按订阅列表依次轮询
 - **去重**：同一更新只推送一次，不会重复
 - **限流**：`concern.emitInterval` 控制全局刷新频率，`notify.parallel` 控制并发
 - **模板**：每个订阅源有对应的推送模板，可自定义

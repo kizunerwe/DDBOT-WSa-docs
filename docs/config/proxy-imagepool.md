@@ -97,7 +97,7 @@ imagePool:
 !!! note "不配置时"
     `imagePool.type` 未配置（空值）或填了其它无效值时不会启用图片池，代码会记录「未知的图片池」；只有显式写 `off` 才是明确的关闭。
 
-`[next-dev]` 生成的配置里写的是 `type: lolicon`，这不是代码识别的取值（代码只认 `loliconPool`），会落入「未知的图片池」分支、图片池不启用。`master` / `next` 生成文件没有 `imagePool` 段，需要时手写。该段由 `[next-dev]` 生成。
+`[next-dev]` 生成的配置里写的是 `type: loliconPool`（早期版本曾生成 `lolicon`——代码不认这个取值，会落入「未知的图片池」分支、图片池静默不启用，已修正）。`master` / `next` 生成文件没有 `imagePool` 段，需要时手写。该段由 `[next-dev]` 生成。
 
 ### `localPool` - 本地图库
 

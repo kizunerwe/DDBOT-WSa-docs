@@ -139,6 +139,9 @@ bot:
 
 触发时会执行模板 `notify.bot.send_failed.tmpl`（需自行创建），可用变量：`message`、`target_id`、`target_type`、`target_name`、`times`。
 
+!!! note "分支差异"
+    `[next-dev]` 已移除整条特性——订阅段与生成配置里的 `bot.sendFailureReminder` 段都不再存在，该配置在 `next-dev` 上不起作用。
+
 ---
 
 ## 异常订阅清理

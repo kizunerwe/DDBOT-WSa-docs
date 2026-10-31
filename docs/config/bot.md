@@ -12,7 +12,7 @@ bot:
   onDisconnected: ""         # 写 "exit" 直接退出；留空时 master / next 尝试重连（失败也退出），[next-dev] 仅记录日志
   onJoinGroup:
     rename: "【bot】"         # 进群自动改名
-  sendFailureReminder:       # 发送失败提醒
+  sendFailureReminder:       # 发送失败提醒（master / next；[next-dev] 已移除该键）
     enable: false
     times: 3
   offlineQueue:              # 离线缓存
@@ -42,7 +42,7 @@ bot:
 
 !!! note "分支差异"
     - `master` / `next`：功能完整接线（读取 `enable`/`times`，发布 `BotSendFailedEvent`，订阅后渲染模板）。
-    - `[next-dev]`：仅有事件订阅、没有发布点，`enable`/`times` 不会触发提醒。
+    - `[next-dev]`：**整条特性已移除**——订阅段与生成配置里的 `bot.sendFailureReminder` 段都不再存在，填了不起任何作用。`BotSendFailedEvent` 类型与 `bot.Bot` 的字段声明保留（对外事件面），但没有任何派发点。
 
 需要自行创建该模板，见 [事件模板](../template/trigger-tmpl.md)。
 

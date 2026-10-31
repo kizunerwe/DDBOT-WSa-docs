@@ -22,7 +22,7 @@ DDBOT 启动时会在**当前目录**读取 `application.yaml`，如果不存在
 
 ## 最小配置（扫码登录 + B 站测试）
 
-默认生成的 `application.yaml` 已经能直接用，**不需要改任何东西**就能完成「下载运行 -> 连接 -> 订阅」的全流程。下面是一份等价的**最小可用配置**，方便看清关键项（实际生成的文件字段更多，还含 `twitter`、`douyin`、`autoreply`、`customCommandPrefix`、`reloadDelay`、`sendFailureReminder`、`offlineQueue` 等）。
+默认生成的 `application.yaml` 已经能直接用，**不需要改任何东西**就能完成「下载运行 -> 连接 -> 订阅」的全流程。下面是一份等价的**最小可用配置**，方便看清关键项（实际生成的文件字段更多，还含 `twitter`、`douyin`、`autoreply`、`customCommandPrefix`、`reloadDelay`、`sendFailureReminder`、`offlineQueue` 等；`[next-dev]` 生成的文件不含 `reloadDelay` 与 `sendFailureReminder`）。
 
 ```yaml
 bot:

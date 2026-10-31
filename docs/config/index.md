@@ -35,7 +35,7 @@ bot:
   onDisconnected: ""         # 写 "exit" 直接退出；留空时 master / next 尝试重连（失败也退出），[next-dev] 仅记录日志
   onJoinGroup:
     rename: "【bot】"         # 进群自动改名，留空不改
-  sendFailureReminder:       # 发送失败提醒（master / next 有效；[next-dev] 不会触发）
+  sendFailureReminder:       # 发送失败提醒（master / next；[next-dev] 已移除该键）
     enable: false
     times: 3
   offlineQueue:              # 离线缓存
@@ -66,7 +66,6 @@ acfun:                       # [next]
   unsub: false
   interval: 25s              # 生成配置 25s
   onlyOnlineNotify: false
-  minFollowerCap: 0          # [next-dev] 生成该键，但代码无读取点，设置无效
 
 twitter:
   mode: mirror               # [next] 起生成但 master / next 不读取（固定 mirror）；仅 [next-dev] 生效，mirror / api（缺省回退 api）
@@ -106,17 +105,17 @@ weibo:                       # [next]
   autorefresh: false         # [next-dev]
   apiModeBaseURL: "http://127.0.0.1:5000"  # [next-dev] 生成值
   snapcastURL: ""            # [next-dev]
-  disableCookieAlert: true   # [next-dev] true 关闭 Cookie/SUB 失效告警；键缺失时告警开启
+  disableCookieAlert: true   # [next-dev] true 关闭 Cookie/SUB 失效告警；键缺失时同样按关闭处理
   cookieRefreshAPI:          # [next-dev] 读取但不生成该键；autorefresh 依赖它
 
 youtube:                     # [next]
   onlyOnlineNotify: true     # 生成配置 true；键缺失时代码默认 false
 
 douyu:                       # [next-dev]
-  interval: 60s              # 生成该键，但代码未读取；轮询间隔走 concern.emitInterval
+  interval: 60s              # 轮询间隔取 site.interval；未配置时回退 concern.emitInterval（再缺失用内置 5s）
 
 huya:                        # [next-dev]
-  interval: 60s              # 生成该键，但代码未读取；轮询间隔走 concern.emitInterval
+  interval: 60s              # 轮询间隔取 site.interval；未配置时回退 concern.emitInterval（再缺失用内置 5s）
 
 xhs:                         # [next-dev]
   cookies:
@@ -175,7 +174,7 @@ customCommandPrefix:
   签到: ""
 
 imagePool:                   # 该段由 [next-dev] 生成
-  type: "off"                # localPool / loliconPool / off；生成文件写的是 lolicon（代码不认，会记录"未知的图片池"）
+  type: "off"                # localPool / loliconPool / off；生成文件写的是 loliconPool
 
 localPool:
   imageDir:
@@ -243,12 +242,12 @@ logLevel: info
 
 !!! warning "已失效 / 需注意的字段"
     - `bot.account` / `bot.password`：不在自动生成的配置里，QQ 连接由 OneBot 实现端负责。`[next-dev]` 起代码完全不读取；`master` / `next` 只有内置 MiraiGo 初始化会读到（`bot/bot/bot.go`），而登录调用已停用（根 `bot.go` 里 `bot.Login()` 被注释），填了不起作用。
-    - `sendFailureReminder.enable` / `.times`：`master` / `next` 有效，发送累计失败达到 `times` 次触发 `notify.bot.send_failed.tmpl`；`[next-dev]` 只订阅事件、没有发布点，提醒不会触发。
+    - `sendFailureReminder.enable` / `.times`：`master` / `next` 有效，发送累计失败达到 `times` 次触发 `notify.bot.send_failed.tmpl`（该模板没有默认版本，需自行创建）；`[next-dev]` 已移除整条特性，该键既不生成也不被读取。
     - `reloadDelay`：`master` / `next` 生成并生效（连上实现端后延迟加载好友/群/群员信息）；`[next-dev]` 起已无此键。
     - `twitter.cfclearance`：三个分支都没有这个配置键，也没有读取点；代码只在抓取时识别 Cloudflare 拦截并报错，无法通过配置注入。
-    - `weibo.alertGroupId` / `weibo.alertQQList`：`[next-dev]` 生成的键，getter 均已无调用者（`alertGroupId` 的 getter 另标了 `// Deprecated:`），设置无效；告警目标改由 `/config weibo_alert` 控制。
-    - `acfun.minFollowerCap`：`[next-dev]` 生成该键，但代码没有任何读取点，设置无效。
-    - `douyu.interval` / `huya.interval`：`[next-dev]` 生成该键，但代码没有读取点；斗鱼/虎牙轮询间隔走 `concern.emitInterval`。
+    - `weibo.alertGroupId` / `weibo.alertQQList`：getter 均无调用者，`[next-dev]` 已不再生成这两个键，设置无效；告警目标改由 `/config weibo_alert` 控制。
+    - `acfun.minFollowerCap`：代码没有任何读取点，`[next-dev]` 已不再生成该键，设置无效。
+    - `douyu.interval` / `huya.interval`：`[next-dev]` 生成该键**且已生效**（轮询间隔取 `site.interval`，未配置时回退 `concern.emitInterval`，再缺失用内置 5s）。`master` / `next` 不生成也不读取该键，斗鱼/虎牙轮询走全局 `concern.emitInterval`。
 
 ---
 

@@ -46,7 +46,7 @@ DDBOT 常用命令的速查表。详细用法见左侧子页面。
 | `/config extend_notify <id> on\|off` | 增强推送开关（`[next]`） |
 | `/config filter type\|not_type\|text\|show\|clear <id> ...` | 动态过滤 |
 | `/config filter not_text <id> ...` | 关键字反向过滤（`[next]`） |
-| `/config weibo_alert ...` | 微博 Cookie/SUB 告警（`[next-dev]`） |
+| `/config weibo_alert show\|true\|false` | 微博 Cookie/SUB 告警开关与目标查看（`[next-dev]`，需 BOT 管理员） |
 
 ```bash
 /config at_all 97505 on

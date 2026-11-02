@@ -156,11 +156,10 @@ admin:
   addr: "127.0.0.1:15631"
   token: ""
 
-weibo:                  # next-dev 相对 next 额外新增：api 模式 / SUB 自动刷新 / SnapCast / Cookie 告警开关
+weibo:                  # next-dev 相对 next 额外新增：api 模式 / SUB 自动刷新 / Cookie 告警开关
   mode: api             # guest / login / api
   autorefresh: false
   apiModeBaseURL: "http://127.0.0.1:5000"
-  snapcastURL: ""
   disableCookieAlert: true
 
 twitter:                # next-dev：API 模式（缺省即 api）

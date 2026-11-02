@@ -47,7 +47,6 @@ weibo:
   autorefresh: false      # [next-dev] login/api 模式自动刷新 SUB
   apiModeBaseURL: ""      # [next-dev] api 模式的外部 API 地址
   cookieRefreshAPI: ""    # [next-dev] autorefresh 时用于获取 SUB 的外部 API
-  snapcastURL: ""         # [next-dev] guest 模式生成 rid 的 SnapCast 服务
   interval: 60s           # 站点级轮询间隔，仅 [next] / [next-dev] 读取
   disableCookieAlert: false  # [next-dev] false 启用告警；生成值是 true，且键缺失时按关闭处理
 ```
@@ -58,6 +57,11 @@ weibo:
 | `login` | `[next]` 登录模式，配置 `sub` 或扫码，支持自动刷新 |
 | `api` | `[next-dev]` API 模式，从外部 API 获取数据，无需 Cookie（推荐） |
 
+!!! note "访客模式的 rid 是本地生成的"
+    `guest` 模式要传给微博 `genvisitor2` 接口一个 `rid`。实测它接受任意字符串，DDBOT 本地随机生成 32 位十六进制即可，**不依赖任何外部服务**。
+
+    历史上这里调用过第三方浏览器渲染服务（`sc.znin.net`）取「真」rid，该服务已完全不可用，相关代码与配置键 `weibo.snapcastURL` 已全部移除。
+
 !!! note "interval 的生效路径"
     - `weibo.interval` 只在 `[next]` / `[next-dev]` 生效（`UseEmitQueueWithSiteInterval("weibo")`）：优先 `weibo.interval`，未配置回退 `concern.emitInterval`（自带示例 5s），两者都缺失时 EmitQueue 用内置默认 5s。
     - `master` 走全局 `concern.emitInterval`，不读取 `weibo.interval`。
@@ -67,6 +71,10 @@ weibo:
 
 !!! note "模式未配置时的行为"
     `[next]` 未配置 `weibo.mode` 时固定使用 `guest`；`[next-dev]` 未配置时若已填 `weibo.sub` 则自动使用 `login`，否则 `guest`。
+
+    **扫码登录成功后模式立即切到 `login`**：SUB 先写入配置文件、同时同步到内存，之后才去加载 Cookie，不存在「已经登录成功、却还在跑访客 Cookie」的空窗期（登录流程也因此从 30 多秒缩短到几秒）。
+
+    反过来，若你手动把 `weibo.sub` 从配置里删掉想退回 `guest`，需要**重启进程**——登录时写入内存的值优先于配置文件。
 
 !!! note "`alertGroupId` / `alertQQList` 已移除（`[next-dev]`）"
     `weibo.alertGroupId` / `weibo.alertQQList` 两个键已从生成配置中删除，getter 也没有任何调用者，**填写不起作用**。告警目标由 `/config weibo_alert` 控制：群内 `true`/`false` 开关本群告警，`show` 查看；私聊 `show`（需 BOT 管理员）列出真正生效的发送对象。`weibo.disableCookieAlert: true` 可整体关闭告警。详见 [配置命令](../commands/config-cmd.md)。

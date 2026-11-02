@@ -368,6 +368,8 @@ pong
 !!! warning "需要开启 qrlogin"
     需先在 `application.yaml` 中设置 `weibo.qrlogin: true`，否则命令会提示未启用。
 
+扫码成功后 SUB **先写入配置文件、再加载到内存**，进程内立即切到 `login` 模式，不需要重启。详见[微博订阅](../sources/weibo.md)的模式说明。
+
 ---
 
 ## `/刷新`（别名 `/scan`）- 手动刷新推特订阅（`[next-dev]`）

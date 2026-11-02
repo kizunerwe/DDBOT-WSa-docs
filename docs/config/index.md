@@ -25,6 +25,8 @@ DDBOT-WSa 的配置文件是 `application.yaml`，首次运行会在**当前工�
     - 所有标点用英文半角
     - 格式错误会导致启动闪退
 
+    `[next-dev]` 启动时会按行校对一遍配置，把「看起来写了、其实读不到」的问题带行号写进日志（**只警告、不中断启动**）：全角冒号当键分隔符、同一层里大小写不同或重复的键、用 Tab 缩进。照着日志改即可。
+
 ---
 
 ## 字段速查 / 合并示例
@@ -104,7 +106,6 @@ weibo:                       # [next]
   qrlogin: true
   autorefresh: false         # [next-dev]
   apiModeBaseURL: "http://127.0.0.1:5000"  # [next-dev] 生成值
-  snapcastURL: ""            # [next-dev]
   disableCookieAlert: true   # [next-dev] true 关闭 Cookie/SUB 失效告警；键缺失时同样按关闭处理
   cookieRefreshAPI:          # [next-dev] 读取但不生成该键；autorefresh 依赖它
 
